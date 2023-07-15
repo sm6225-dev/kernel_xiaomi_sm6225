@@ -1237,6 +1237,9 @@ static int battery_psy_get_prop(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT_MAX:
 		pval->intval = bcdev->num_thermal_levels;
 		break;
+	case POWER_SUPPLY_PROP_CHARGE_COUNTER:
+		pval->intval = pst->prop[prop_id] * 1000;
+		break;
 	default:
 		pval->intval = pst->prop[prop_id];
 		break;
