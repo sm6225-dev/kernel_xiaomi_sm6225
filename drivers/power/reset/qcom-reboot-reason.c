@@ -18,11 +18,8 @@
 #include <linux/reset_reason.h>
 #include <linux/slab.h>
 #endif
-#ifdef CONFIG_POWER_RESET_QCOM_REBOOT_REASON_BOOTPARAM
 #include <linux/panic_notifier.h>
-#endif
 
-#define PON_REASON_PANIC	0x07
 #define INTENT_BIT_SHIFT	6	/* SDAM bit[7] reserved for reboot intent flag */
 #define REASON_MASK		0x3F	/* Lower 6 bits for reboot reason */
 
@@ -34,6 +31,7 @@ enum reboot_reason_category {
 struct qcom_reboot_reason {
 	struct device *dev;
 	struct notifier_block reboot_nb;
+	struct notifier_block panic_nb;
 	struct nvmem_cell *nvmem_cell;
 #ifdef CONFIG_POWER_RESET_QCOM_RESET_REASON
 	struct kobject kobj;
@@ -41,7 +39,6 @@ struct qcom_reboot_reason {
 #endif
 #ifdef CONFIG_POWER_RESET_QCOM_REBOOT_REASON_BOOTPARAM
 	struct kobject bootparam_kobj;
-	struct notifier_block panic_nb;
 #endif
 };
 
@@ -58,9 +55,9 @@ static struct poweroff_reason reasons[] = {
 	{ "dm-verity device corrupted",	0x04,	REBOOT_UNINTENTIONAL },
 	{ "dm-verity enforcing",	0x05,	REBOOT_INTENTIONAL },
 	{ "keys clear",			0x06,	REBOOT_INTENTIONAL },
+	{ "panic",			0x21,	REBOOT_UNINTENTIONAL },
 #if defined(CONFIG_POWER_RESET_QCOM_RESET_REASON) || \
 	defined(CONFIG_POWER_RESET_QCOM_REBOOT_REASON_BOOTPARAM)
-	{ "panic",			0x07,	REBOOT_UNINTENTIONAL },
 	{ "watchdog bark",		0x08,	REBOOT_UNINTENTIONAL },
 #endif
 #ifdef CONFIG_POWER_RESET_QCOM_REBOOT_REASON_BOOTPARAM
@@ -72,6 +69,7 @@ static struct poweroff_reason reasons[] = {
 	{ "user",			0x10,	REBOOT_INTENTIONAL },
 	{ "system-normal",		0x11,	REBOOT_INTENTIONAL },
 	{ "system-abnormal",		0x12,	REBOOT_UNINTENTIONAL },
+	{ NULL,				0x20,	REBOOT_INTENTIONAL },
 	{}
 };
 
@@ -182,24 +180,23 @@ static void write_reset_reason(char *cmd, struct nvmem_cell *nvmem_cell)
 	int ret;
 
 	for (reason = reasons; reason->cmd; reason++) {
-		if (strcmp(cmd, reason->cmd))
-			continue;
-
-		/*
-		 * SDAM 0x7148 layout:
-		 * bit[7] -> Intentional reboot flag (0 = unintentional, 1 = intentional)
-		 * bits[1:6] -> Reboot reason code
-		 *
-		 * Combine category and reason into one byte:
-		 * - Shift category by INTENT_BIT_SHIFT to position bit[7]
-		 * - Mask reason with REASON_MASK to keep lower 6 bits
-		 */
-		val = ((reason->category & 0x01) << INTENT_BIT_SHIFT) |
-			(reason->pon_reason & REASON_MASK);
-		ret = nvmem_cell_write(nvmem_cell, &val, sizeof(val));
-		pr_info("%s: Value 0x%x, ret %d\n", __func__, val, ret);
-		break;
+		if (cmd && !strcmp(cmd, reason->cmd))
+			break;
 	}
+
+	/*
+	 * SDAM 0x7148 layout:
+	 * bit[7] -> Intentional reboot flag (0 = unintentional, 1 = intentional)
+	 * bits[1:6] -> Reboot reason code
+	 *
+	 * Combine category and reason into one byte:
+	 * - Shift category by INTENT_BIT_SHIFT to position bit[7]
+	 * - Mask reason with REASON_MASK to keep lower 6 bits
+	 */
+	val = ((reason->category & 0x01) << INTENT_BIT_SHIFT) |
+		(reason->pon_reason & REASON_MASK);
+	ret = nvmem_cell_write(nvmem_cell, &val, sizeof(val));
+	pr_info("%s: cmd '%s', Value 0x%x, ret %d\n", __func__, cmd ? : "NULL", val, ret);
 }
 
 #ifdef CONFIG_POWER_RESET_QCOM_STORE_RESET_REASON
@@ -276,31 +273,21 @@ static int qcom_reboot_reason_reboot(struct notifier_block *this,
 	char *cmd = ptr;
 	struct qcom_reboot_reason *reboot = container_of(this,
 		struct qcom_reboot_reason, reboot_nb);
-	char *reason_user = "user";
-
-	if (!cmd)
-		cmd = reason_user;
 
 	write_reset_reason(cmd, reboot->nvmem_cell);
 
 	return NOTIFY_OK;
 }
 
-#ifdef CONFIG_POWER_RESET_QCOM_REBOOT_REASON_BOOTPARAM
-static int qcom_reboot_reason_panic(struct notifier_block *this,
-		unsigned long event, void *ptr)
+static int panic_prep_restart(struct notifier_block *this,
+			      unsigned long event, void *ptr)
 {
 	struct qcom_reboot_reason *reboot = container_of(this,
-			struct qcom_reboot_reason, panic_nb);
-	unsigned int pon_reason = PON_REASON_PANIC;
+		struct qcom_reboot_reason, panic_nb);
 
-	nvmem_cell_write(reboot->nvmem_cell,
-			&pon_reason,
-			sizeof(pon_reason));
-
-	return 0;
+	write_reset_reason("panic", reboot->nvmem_cell);
+	return NOTIFY_DONE;
 }
-#endif
 
 static int qcom_reboot_reason_probe(struct platform_device *pdev)
 {
@@ -325,15 +312,16 @@ static int qcom_reboot_reason_probe(struct platform_device *pdev)
 #endif
 #ifdef CONFIG_POWER_RESET_QCOM_REBOOT_REASON_BOOTPARAM
 	bootparam_sysfs(reboot);
-	reboot->panic_nb.notifier_call = qcom_reboot_reason_panic;
-	reboot->panic_nb.priority = 255;
-	atomic_notifier_chain_register(&panic_notifier_list, &reboot->panic_nb);
 #endif
 	reboot->reboot_nb.notifier_call = qcom_reboot_reason_reboot;
 	reboot->reboot_nb.priority = 255;
 	register_reboot_notifier(&reboot->reboot_nb);
 
 	platform_set_drvdata(pdev, reboot);
+
+	reboot->panic_nb.notifier_call = panic_prep_restart;
+	reboot->panic_nb.priority = INT_MAX;
+	atomic_notifier_chain_register(&panic_notifier_list, &reboot->panic_nb);
 
 	return 0;
 }
@@ -342,10 +330,9 @@ static int qcom_reboot_reason_remove(struct platform_device *pdev)
 {
 	struct qcom_reboot_reason *reboot = platform_get_drvdata(pdev);
 
-	unregister_reboot_notifier(&reboot->reboot_nb);
-#ifdef CONFIG_POWER_RESET_QCOM_REBOOT_REASON_BOOTPARAM
 	atomic_notifier_chain_unregister(&panic_notifier_list, &reboot->panic_nb);
-#endif
+	unregister_reboot_notifier(&reboot->reboot_nb);
+
 	return 0;
 }
 
