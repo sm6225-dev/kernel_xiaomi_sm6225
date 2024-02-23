@@ -144,4 +144,4 @@ obj-$(CONFIG_QCOM_AOP_FAULT_COLLECTOR) += qcom_aop_fault_collector.o
 obj-$(CONFIG_QCOM_SAIL_MAILBOX) += qcom-sail-mbox.o
 obj-$(CONFIG_SDX_EXT_IPC) += sdx_ext_ipc.o
 obj-$(CONFIG_QTI_NOTIFY_SIDEBAND) += sideband_notify.o
-obj-m += serial_num.o
+obj-$(CONFIG_TARGET_PROJECT_K7T) += serial_num.o
