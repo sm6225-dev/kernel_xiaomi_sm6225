@@ -895,10 +895,10 @@ static void generate_xm_charge_uvent(struct work_struct *work)
 	if(val){
 		pr_err("uevent: BMS PSY get CAPACITY Error !\n");
                 return;
-	}else if(pval.intval > 1){
+	}else if(pval.intval > 1 && chg->usb_online){
 		schedule_delayed_work(&chg->xm_prop_change_work, msecs_to_jiffies(500));
 	}
-	else{
+	else if(chg->usb_online){
 		schedule_delayed_work(&chg->xm_prop_change_work, msecs_to_jiffies(2000));
 	}
 #endif
@@ -2264,8 +2264,10 @@ static void  nopmi_cv_step_monitor_work(struct work_struct *work)
 	pr_info("fg_cc_cv_step_check: i:%d cccv_step vote:%d stepdown:%d finalFCC:%d",
 					i, votFCC, stepdown, finalFCC);
 out:
-	schedule_delayed_work(&nopmi_chg->cvstep_monitor_work,
-				msecs_to_jiffies(NOPMI_CHG_CV_STEP_MONITOR_WORKFUNC_GAP));
+	if (nopmi_chg->usb_online && nopmi_chg_is_usb_present(nopmi_chg->main_psy)) {
+		schedule_delayed_work(&nopmi_chg->cvstep_monitor_work,
+					msecs_to_jiffies(NOPMI_CHG_CV_STEP_MONITOR_WORKFUNC_GAP));
+	}
 	pr_info("nopmi_cv_step_monitor_work: end");
 }
 
@@ -2928,6 +2930,7 @@ static int nopmi_chg_remove(struct platform_device *pdev)
 	return 0;
 }
 
+
 static const struct of_device_id nopmi_chg_dt_match[] = {
 	{.compatible = "qcom,nopmi-chg"},
 	{},
@@ -2938,6 +2941,7 @@ static struct platform_driver nopmi_chg_driver = {
 		.owner = THIS_MODULE,
 		.name = "qcom,nopmi-chg",
 		.of_match_table = nopmi_chg_dt_match,
+
 	},
 	.probe = nopmi_chg_probe,
 	.remove = nopmi_chg_remove,
