@@ -37,5 +37,5 @@ _IOR(ST21NFC_MAGIC, 0x03, unsigned int)
 void st21nfc_register_st54spi_cb(void (*cb)(int, void *), void *data);
 void st21nfc_unregister_st54spi_cb(void);
 
-#define ACCESS_OK(x, y, z) access_ok(x, y, z)
+#define ACCESS_OK(x, y, z) access_ok(y, z)
 
