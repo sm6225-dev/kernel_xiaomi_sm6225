@@ -134,6 +134,9 @@ int socinfo_get_part_count(enum subset_part_type part);
 int socinfo_get_subpart_info(enum subset_part_type part,
 		u32 *part_info,
 		u32 num_parts);
+char *socinfo_get_partinfo_part_name(unsigned int part_id);
+uint32_t socinfo_get_partinfo_chip_id(unsigned int part_id);
+uint32_t socinfo_get_partinfo_vulkan_id(unsigned int part_id);
 #else
 static inline uint32_t socinfo_get_id(void)
 {
@@ -160,6 +163,14 @@ int socinfo_get_pcode(void)
 const char *socinfo_get_partinfo_part_name(unsigned int part_id)
 {
 	return NULL;
+}
+uint32_t socinfo_get_partinfo_chip_id(unsigned int part_id)
+{
+	return 0;
+}
+uint32_t socinfo_get_partinfo_vulkan_id(unsigned int part_id)
+{
+	return 0;
 }
 uint32_t socinfo_get_cluster_info(enum subset_cluster_type cluster)
 {
