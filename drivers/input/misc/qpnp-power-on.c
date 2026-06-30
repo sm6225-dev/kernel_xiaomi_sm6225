@@ -761,16 +761,15 @@ int qpnp_pon_system_pwr_off(enum pon_power_off_type type)
 {
 	struct qpnp_pon *pon, *tmp;
 	unsigned long flags;
-	int rc;
+	int rc = 0;
 
-	if (!sys_reset_dev)
-		return -ENODEV;
-
-	rc = qpnp_pon_reset_config(sys_reset_dev, type);
-	if (rc) {
-		dev_err(sys_reset_dev->dev, "Error configuring main PON, rc=%d\n",
-			rc);
-		return rc;
+	if (sys_reset_dev) {
+		rc = qpnp_pon_reset_config(sys_reset_dev, type);
+		if (rc) {
+			dev_err(sys_reset_dev->dev, "Error configuring main PON, rc=%d\n",
+				rc);
+			return rc;
+		}
 	}
 
 	/*
