@@ -28,6 +28,10 @@ enum panel_event_notifier_client {
 	PANEL_EVENT_NOTIFIER_CLIENT_MAX
 };
 
+/* Fix conflict with Xiaomi drm_panel.h macros */
+#undef DRM_PANEL_EVENT_BLANK
+#undef DRM_PANEL_EARLY_EVENT_BLANK
+
 enum panel_event_notification_type {
 	DRM_PANEL_EVENT_NONE,
 	DRM_PANEL_EVENT_BLANK,
