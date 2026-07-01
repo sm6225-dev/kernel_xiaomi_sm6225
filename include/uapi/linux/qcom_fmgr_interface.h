@@ -10,16 +10,18 @@
 
 #ifndef FM_INTERFACE_H
 #define FM_INTERFACE_H
+#include <linux/types.h>
+#include <linux/i2c.h>
 #include <linux/ioctl.h>
 /* TODO: Modify below structure based on requirement
  * Add comments for specific members
  */
 struct fmgr_ioctl_pmbus_msg {
-	uint16_t addr;
-	uint32_t reg;
-	uint8_t phase;
-	uint8_t page;
-	uint32_t size;
+	__u16 addr;
+	__u32 reg;
+	__u8 phase;
+	__u8 page;
+	__u32 size;
 	union i2c_smbus_data buf;
 };
 
