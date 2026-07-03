@@ -464,20 +464,6 @@ static int rpmd_psy_notifier_call(struct notifier_block *nb,
 			rpmd->usb_type_polling_cnt = 0;
 			schedule_delayed_work(&rpmd->usb_dwork, 0);
 		}
-	} else if (propval.intval == POWER_SUPPLY_TYPE_UNKNOWN) {
-		/*
-		 * Charger disconnected but TCPC may not have fired a detach
-		 * event (same LPM blind-spot).  Stop peripheral mode if we
-		 * started it via the fallback path above.
-		 */
-		if (rpmd->usb_dr == DR_DEVICE ||
-		    rpmd->usb_dr == DR_HOST_TO_DEVICE) {
-			pr_info("%s: USB disconnect via bbc PSY fallback\n",
-				__func__);
-			cancel_delayed_work(&rpmd->usb_dwork);
-			rpmd->usb_dr = DR_IDLE;
-			schedule_delayed_work(&rpmd->usb_dwork, 0);
-		}
 	}
 
 	return NOTIFY_DONE;
@@ -1043,9 +1029,12 @@ static int typec_init(struct rt_pd_manager_data *rpmd)
 	rpmd->typec_caps.data = TYPEC_PORT_DRD;
 	rpmd->typec_caps.revision = 0x0120;
 	rpmd->typec_caps.pd_revision = 0x0300;
+	
+	/* Force TRY_SNK to prevent boot-time race condition with PC which causes us to become Source */
+	rpmd->tcpc->desc.role_def = TYPEC_ROLE_TRY_SNK;
+
 	switch (rpmd->tcpc->desc.role_def) {
 	case TYPEC_ROLE_SRC:
-	case TYPEC_ROLE_TRY_SRC:
 		rpmd->typec_caps.prefer_role = TYPEC_SOURCE;
 		break;
 	case TYPEC_ROLE_SNK:
@@ -1376,6 +1365,18 @@ static int rt_pd_manager_probe(struct platform_device *pdev)
 			 __func__, ret);
 		/* Non-fatal; continue without fallback */
 		ret = 0;
+	}
+
+	{
+		union power_supply_propval propval = {0};
+		if (smblib_get_prop_from_bbc(rpmd, POWER_SUPPLY_PROP_CHARGE_TYPE, &propval) >= 0) {
+			if (propval.intval != POWER_SUPPLY_TYPE_UNKNOWN) {
+				pr_info("%s: Charger connected at boot (type=%d), starting DR_DEVICE\n", __func__, propval.intval);
+				rpmd->usb_dr = DR_DEVICE;
+				rpmd->usb_type_polling_cnt = 0;
+				schedule_delayed_work(&rpmd->usb_dwork, msecs_to_jiffies(500));
+			}
+		}
 	}
 
 	tcpc_class_complete_init();
