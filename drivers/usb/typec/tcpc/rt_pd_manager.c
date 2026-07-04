@@ -464,6 +464,17 @@ static int rpmd_psy_notifier_call(struct notifier_block *nb,
 			rpmd->usb_type_polling_cnt = 0;
 			schedule_delayed_work(&rpmd->usb_dwork, 0);
 		}
+	} else {
+		/* Charger IC no longer reports USB type -- cable removed */
+		if (rpmd->usb_dr == DR_DEVICE ||
+		    rpmd->usb_dr == DR_HOST_TO_DEVICE) {
+			pr_info("%s: USB absent (type=%d) via bbc PSY "
+				"-- stopping peripheral fallback\n",
+				__func__, propval.intval);
+			cancel_delayed_work(&rpmd->usb_dwork);
+			rpmd->usb_dr = DR_IDLE;
+			schedule_delayed_work(&rpmd->usb_dwork, 0);
+		}
 	}
 
 	return NOTIFY_DONE;
@@ -1370,7 +1381,9 @@ static int rt_pd_manager_probe(struct platform_device *pdev)
 	{
 		union power_supply_propval propval = {0};
 		if (smblib_get_prop_from_bbc(rpmd, POWER_SUPPLY_PROP_CHARGE_TYPE, &propval) >= 0) {
-			if (propval.intval != POWER_SUPPLY_TYPE_UNKNOWN) {
+			if (propval.intval == POWER_SUPPLY_TYPE_USB ||
+			    propval.intval == POWER_SUPPLY_TYPE_USB_CDP ||
+			    propval.intval == QTI_POWER_SUPPLY_TYPE_USB_FLOAT) {
 				pr_info("%s: Charger connected at boot (type=%d), starting DR_DEVICE\n", __func__, propval.intval);
 				rpmd->usb_dr = DR_DEVICE;
 				rpmd->usb_type_polling_cnt = 0;
