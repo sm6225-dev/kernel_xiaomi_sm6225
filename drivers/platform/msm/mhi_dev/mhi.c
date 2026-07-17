@@ -79,9 +79,9 @@
 int ignore_ch_channel[IGNORE_CH_SIZE] = {2, 3, 24, 25};
 
 uint32_t bhi_imgtxdb;
-enum mhi_msg_level mhi_msg_lvl = MHI_MSG_ERROR;
+enum mhi_msg_level mhi_msg_lvl = MHI_MSG_NOTICE;
 enum mhi_msg_level mhi_ipc_msg_lvl = MHI_MSG_VERBOSE;
-enum mhi_msg_level mhi_ipc_err_msg_lvl = MHI_MSG_ERROR;
+enum mhi_msg_level mhi_ipc_err_msg_lvl = MHI_MSG_INFO;
 void *mhi_ipc_vf_log[MHI_MAX_NUM_INSTANCES];
 void *mhi_ipc_err_log;
 void *mhi_ipc_default_err_log;
@@ -142,7 +142,7 @@ int mhi_dma_provide_ops(const struct mhi_dma_ops *ops)
 		return -EINVAL;
 	}
 
-	mhi_log(MHI_DEV_PHY_FUN, MHI_MSG_VERBOSE, "Received MHI DMA fun ops\n");
+	mhi_log(MHI_DEV_PHY_FUN, MHI_MSG_NOTICE, "Received MHI DMA fun ops\n");
 
 	memcpy(&mhi_hw_ctx->mhi_dma_fun_ops, ops, sizeof(struct mhi_dma_ops));
 	mhi_dma_fun_ops = &mhi_hw_ctx->mhi_dma_fun_ops;
@@ -3967,7 +3967,7 @@ int mhi_dev_channel_isempty(struct mhi_dev_client *handle)
 
 	rc = ch->ring->rd_offset == ch->ring->wr_offset;
 	if (rc)
-		mhi_log(handle->vf_id, MHI_MSG_WARNING, "Chan_id=0x%x is empty rp/wp:%x\n",
+		mhi_log(handle->vf_id, MHI_MSG_DBG, "Chan_id=0x%x is empty rp/wp:%x\n",
 			ch->ch_id,
 			ch->ring->rd_offset);
 
@@ -4633,11 +4633,6 @@ static void mhi_dev_enable(struct work_struct *work)
 
 	mutex_unlock(&mhi->mhi_lock);
 
-	/* Enable MHI dev network stack Interface */
-	rc = mhi_dev_net_interface_init(&dev_ops, mhi->vf_id, mhi_hw_ctx->ep_cap.num_vfs);
-	if (rc)
-		mhi_log(mhi->vf_id, MHI_MSG_ERROR,
-				"Failed to initialize mhi_dev_net iface\n");
 	return;
 exit:
 	/*
@@ -5096,12 +5091,6 @@ static int mhi_init(struct mhi_dev *mhi, bool init_state)
 	spin_lock_init(&mhi->lock);
 	spin_lock_init(&mhi->msi_lock);
 
-	if (!mhi->mmio_backup)
-		mhi->mmio_backup = devm_kzalloc(&pdev->dev, MHI_DEV_MMIO_RANGE, GFP_KERNEL);
-
-	if (!mhi->mmio_backup)
-		return -ENOMEM;
-
 	return 0;
 }
 
@@ -5134,7 +5123,7 @@ static int mhi_dev_channel_init(struct mhi_dev *mhi, uint32_t ch_id)
 	mhi_ring_init(mhi->ring[mhi->ch_ring_start + ch_id], RING_TYPE_CH,
 			mhi->ch_ring_start + ch_id);
 	mhi_ring_set_cb(mhi->ring[mhi->ch_ring_start + ch_id], mhi_dev_process_tre_ring);
-	mhi_log(mhi->vf_id, MHI_MSG_INFO, "Memory allocated for ring of ch =%d\n",
+	mhi_log(mhi->vf_id, MHI_MSG_DBG, "Memory allocated for ring of ch =%d\n",
 			ch_id);
 
 	return 0;
@@ -5385,6 +5374,7 @@ static int mhi_dev_resume_mmio_mhi_init(struct mhi_dev *mhi_ctx)
 	if (mhi_ctx->config_iatu || mhi_ctx->mhi_int) {
 
 		dev_info(&pdev->dev, "request mhi irq %d\n", mhi_ctx->mhi_irq);
+		irq_set_status_flags(mhi_ctx->mhi_irq, IRQ_NOAUTOEN);
 		rc = devm_request_irq(&pdev->dev, mhi_ctx->mhi_irq, mhi_dev_isr,
 			IRQF_TRIGGER_HIGH, "mhi_isr", mhi_ctx);
 		if (rc) {
@@ -5392,8 +5382,6 @@ static int mhi_dev_resume_mmio_mhi_init(struct mhi_dev *mhi_ctx)
 			mutex_unlock(&mhi_ctx->mhi_lock);
 			return -EINVAL;
 		}
-
-		disable_irq(mhi_ctx->mhi_irq);
 	}
 
 	mhi_ctx->init_done = true;
@@ -5446,7 +5434,6 @@ static void mhi_dev_pcie_handle_event(struct work_struct *work)
 	enum ep_pcie_link_status link_state;
 	struct mhi_dev *mhi = container_of(work, struct mhi_dev, pcie_event);
 
-	mhi_uci_init();
 	if (!mhi_dma_fun_ops && !mhi->use_edma) {
 		/*
 		 * Register for linkup event if it is not registered in
@@ -5513,6 +5500,12 @@ static void mhi_dev_pcie_handle_event(struct work_struct *work)
 			return;
 		}
 	}
+
+	/* Enable MHI dev network stack Interface */
+	rc = mhi_dev_net_interface_init(&dev_ops, mhi->vf_id, mhi_hw_ctx->ep_cap.num_vfs);
+	if (rc)
+		mhi_log(mhi->vf_id, MHI_MSG_ERROR,
+				"Failed to initialize mhi_dev_net iface\n");
 }
 
 static void mhi_dev_setup_virt_device(struct mhi_dev_ctx *mhictx)
@@ -5577,6 +5570,45 @@ int mhi_edma_status(void)
 	return ret;
 }
 
+/**
+ * is_non_pcie_boot - Check if the device is not booting over PCIe
+ *
+ * @pdev: Pointer to the platform device structure
+ *
+ * Returns: true if the device is not booting over PCIe, false otherwise
+ *
+ * This function checks if the device is not booting over PCIe (booting over some
+ * other interface like usb) by reading the "qcom,mhi-ifc-id" property from the
+ * device tree and checking the link status of the corresponding PCIe handle.
+ * If the link status is invalid, it indicates that the device is not booting over PCIe.
+ */
+static bool is_non_pcie_boot(struct platform_device *pdev)
+{
+	int rc = 0;
+	u32 ifc_id;
+	struct ep_pcie_hw *phandle;
+
+	if (pdev->dev.of_node) {
+		rc = of_property_read_u32((&pdev->dev)->of_node,
+				"qcom,mhi-ifc-id", &ifc_id);
+		if (rc) {
+			dev_err(&pdev->dev, "qcom,mhi-ifc-id does not exist\n");
+			return false;
+		}
+
+		phandle = ep_pcie_get_phandle(ifc_id);
+		if (phandle) {
+			if (ep_pcie_get_linkstatus(phandle) == EP_PCIE_LINK_INVALID) {
+				dev_notice(&pdev->dev, "PCIe: not a pcie boot\n");
+				return true;
+			}
+		} else {
+			dev_err(&pdev->dev, "PCIe: Invalid ep-pcie handle\n");
+		}
+	}
+	return false;
+}
+
 int mhi_edma_init(struct device *dev)
 {
 	if (!mhi_hw_ctx->tx_dma_chan) {
@@ -5607,6 +5639,11 @@ static int mhi_dev_probe(struct platform_device *pdev)
 {
 	struct mhi_dev *mhi_pf = NULL;
 	int rc = 0, devfac = 0;
+
+	if (is_non_pcie_boot(pdev)) {
+		dev_notice(&pdev->dev, "PCIe: not a pcie boot\n");
+		return -EPERM;
+	}
 
 	if (pdev->dev.of_node) {
 		rc = mhi_get_device_info(pdev);
@@ -5653,6 +5690,7 @@ static int mhi_dev_probe(struct platform_device *pdev)
 		INIT_LIST_HEAD(&mhi_pf->client_cb_list);
 		mutex_init(&mhi_pf->mhi_lock);
 
+		mhi_uci_init();
 		mhi_update_state_info(mhi_pf, MHI_STATE_CONFIGURED);
 	}
 
@@ -5662,17 +5700,12 @@ static int mhi_dev_probe(struct platform_device *pdev)
 		mhi_dev_pcie_notify_event = MHI_INIT;
 		/* Get EP PCIe capabilities to check if it supports SRIOV capability */
 		ep_pcie_core_get_capability(mhi_hw_ctx->phandle, &mhi_hw_ctx->ep_cap);
-
-		/*
-		 * PCIe driver is available and link is already up,
-		 * proceed with UCI initialization
-		 */
-		mhi_uci_init();
 		/*
 		 * Setup all virtual device prior to PF Mission mode
 		 * completion to make sure VF's are initialized in mission
 		 * mode directly, if not host assumes it in PBL state.
 		 */
+
 		if (!mhi_pf) {
 			mhi_log(MHI_DEFAULT_ERROR_LOG_ID, MHI_MSG_ERROR,
 					"mhi_pf is NULL, defering\n");

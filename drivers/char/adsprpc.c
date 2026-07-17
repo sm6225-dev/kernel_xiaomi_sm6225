@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 /* Uncomment this block to log an error on every VERIFY failure */
@@ -3320,6 +3320,15 @@ int fastrpc_internal_invoke(struct fastrpc_file *fl, uint32_t mode,
 	PERF_END);
 	trace_fastrpc_msg("inv_args_1: end");
 
+	/*
+	 * Store submission timestamp in ctx before sending to DSP.
+	 * For async invokes, perf->invoke will be updated in the collector
+	 * thread (fastrpc_wait_on_async_queue) where ctx is still valid,
+	 * measuring full end-to-end latency consistent with the sync path.
+	 */
+	if (fl->profile && isasyncinvoke)
+		ctx->invoke_start_time = invoket;
+
 	PERF(fl->profile, GET_COUNTER(perf_counter, PERF_LINK),
 	VERIFY(err, 0 == (err = fastrpc_invoke_send(ctx,
 		kernel, invoke->handle)));
@@ -3398,9 +3407,6 @@ int fastrpc_internal_invoke(struct fastrpc_file *fl, uint32_t mode,
 	}
 
 invoke_end:
-	if (fl->profile && !interrupted && isasyncinvoke)
-		fastrpc_update_invoke_count(invoke->handle, perf_counter,
-						&invoket);
 	return err;
 }
 
@@ -3476,6 +3482,15 @@ bail:
 		async_res->result = ierr;
 	if (ctx) {
 		if (fl->profile && ctx->perf && ctx->handle > FASTRPC_STATIC_HANDLE_MAX) {
+			/*
+			 * Update invoke/count perf counters here where ctx->perf is
+			 * guaranteed valid. This measures full end-to-end async latency
+			 * (submit → DSP → collect), consistent with the sync path.
+			 * invoke_start_time was stored in ctx before fastrpc_invoke_send
+			 * in fastrpc_internal_invoke.
+			 */
+			fastrpc_update_invoke_count(ctx->handle, perf_counter,
+				&ctx->invoke_start_time);
 			trace_fastrpc_perf_counters(ctx->handle, ctx->sc,
 			ctx->perf->count, ctx->perf->flush, ctx->perf->map,
 			ctx->perf->copy, ctx->perf->link, ctx->perf->getargs,
@@ -3862,7 +3877,7 @@ bail:
 
 static int fastrpc_mmap_remove_pdr(struct fastrpc_file *fl);
 static int fastrpc_channel_open(struct fastrpc_file *fl, uint32_t flags);
-static int fastrpc_mmap_remove_ssr(struct fastrpc_file *fl, int locked);
+static int fastrpc_dsp_restart_handler(struct fastrpc_file *fl, int locked, bool dump_req);
 
 /*
  * This function makes a call to create a thread group in the root
@@ -5032,8 +5047,8 @@ bail:
 	return err;
 }
 
-
-static int fastrpc_mmap_dump(struct fastrpc_mmap *map, struct fastrpc_file *fl, int locked)
+static int fastrpc_mmap_dump(struct fastrpc_mmap *map,
+				struct fastrpc_file *fl, int locked, bool dump_req)
 {
 	struct fastrpc_mmap *match = map;
 	int err = 0, ret = 0;
@@ -5088,18 +5103,20 @@ static int fastrpc_mmap_dump(struct fastrpc_mmap *map, struct fastrpc_file *fl, 
 		if (err)
 			return err;
 	}
-	memset(&ramdump_segments_rh, 0, sizeof(ramdump_segments_rh));
-	ramdump_segments_rh.da = match->phys;
-	ramdump_segments_rh.va = (void *)page_address((struct page *)match->va);
-	ramdump_segments_rh.size = match->size;
-	INIT_LIST_HEAD(&head);
-	list_add(&ramdump_segments_rh.node, &head);
-	if (me->dev[RH_CID] && dump_enabled() &&
-		me->channel[RH_CID].hib_state == NORMAL_STATE) {
-		ret = qcom_elf_dump(&head, me->dev[RH_CID], ELF_CLASS);
-		if (ret < 0)
-			pr_err("adsprpc: %s: unable to dump heap (err %d)\n",
-						__func__, ret);
+	if (dump_req) {
+		memset(&ramdump_segments_rh, 0, sizeof(ramdump_segments_rh));
+		ramdump_segments_rh.da = match->phys;
+		ramdump_segments_rh.va = (void *)page_address((struct page *)match->va);
+		ramdump_segments_rh.size = match->size;
+		INIT_LIST_HEAD(&head);
+		list_add(&ramdump_segments_rh.node, &head);
+		if (me->dev[RH_CID] && dump_enabled() &&
+			me->channel[RH_CID].hib_state == NORMAL_STATE) {
+			ret = qcom_elf_dump(&head, me->dev[RH_CID], ELF_CLASS);
+			if (ret < 0)
+				pr_err("adsprpc: %s: unable to dump heap (err %d)\n",
+							__func__, ret);
+		}
 	}
 	if (!match->is_persistent) {
 		if (!locked && fl)
@@ -5111,7 +5128,7 @@ static int fastrpc_mmap_dump(struct fastrpc_mmap *map, struct fastrpc_file *fl, 
 	return 0;
 }
 
-static int fastrpc_mmap_remove_ssr(struct fastrpc_file *fl, int locked)
+static int fastrpc_dsp_restart_handler(struct fastrpc_file *fl, int locked, bool dump_req)
 {
 	struct fastrpc_mmap *match = NULL, *map = NULL;
 	struct hlist_node *n = NULL;
@@ -5145,7 +5162,7 @@ static int fastrpc_mmap_remove_ssr(struct fastrpc_file *fl, int locked)
 		}
 		spin_unlock_irqrestore(&me->hlock, irq_flags);
 		if (match)
-			err = fastrpc_mmap_dump(match, fl, locked);
+			err = fastrpc_mmap_dump(match, fl, locked, dump_req);
 	} while (match && !err);
 bail:
 	if (err && match) {
@@ -5190,7 +5207,7 @@ static int fastrpc_mmap_remove_pdr(struct fastrpc_file *fl)
 	}
 	if (me->channel[cid].spd[session].pdrcount !=
 		me->channel[cid].spd[session].prevpdrcount) {
-		err = fastrpc_mmap_remove_ssr(fl, 0);
+		err = fastrpc_dsp_restart_handler(fl, 0, false);
 		if (err)
 			ADSPRPC_WARN("failed to unmap remote heap (err %d)\n",
 					err);
@@ -6235,7 +6252,7 @@ static int fastrpc_channel_open(struct fastrpc_file *fl, uint32_t flags)
 			 me->channel[cid].prevssrcount) {
 		mutex_unlock(&me->channel[cid].smd_mutex);
 		mutex_lock(&fl->map_mutex);
-		err = fastrpc_mmap_remove_ssr(fl, 1);
+		err = fastrpc_dsp_restart_handler(fl, 1, true);
 		mutex_unlock(&fl->map_mutex);
 		if (err)
 			ADSPRPC_WARN(
@@ -7758,7 +7775,8 @@ static int fastrpc_restart_notifier_cb(struct notifier_block *nb,
 		pr_info("adsprpc: %s: subsystem %s is about to start\n",
 			__func__, gcinfo[cid].subsys);
 		if (cid == CDSP_DOMAIN_ID && dump_enabled() &&
-				ctx->ssrcount) {
+				ctx->ssrcount &&
+				me->channel[cid].hib_state == NORMAL_STATE) {
 			fastrpc_update_ramdump_status(cid);
 			mutex_lock(&me->channel[cid].smd_mutex);
 			fastrpc_print_debug_data(cid);
@@ -7767,7 +7785,8 @@ static int fastrpc_restart_notifier_cb(struct notifier_block *nb,
 		fastrpc_notify_drivers(me, cid);
 		/* Skip ram dump collection in first boot */
 		if (cid == CDSP_DOMAIN_ID && dump_enabled() &&
-				ctx->ssrcount) {
+				ctx->ssrcount &&
+				me->channel[cid].hib_state == NORMAL_STATE) {
 			ktime_get_real_ts64(&startT);
 			fastrpc_ramdump_collection(cid);
 			pr_info("adsprpc: %s: fastrpc ramdump finished in %lu (us)\n",
@@ -8421,7 +8440,7 @@ static int fastrpc_hibernation_suspend(struct device *dev)
 					"qcom,msm-fastrpc-compute")) {
 		for (cid = 0; cid < NUM_CHANNELS; cid++)
 			me->channel[cid].hib_state = HIBERNATION_SUSPEND;
-		err = fastrpc_mmap_remove_ssr(NULL, 0);
+		err = fastrpc_dsp_restart_handler(NULL, 0, true);
 		if (err)
 			ADSPRPC_WARN("failed to unmap remote heap (err %d)\n",
 					err);

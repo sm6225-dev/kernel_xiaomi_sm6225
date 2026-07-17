@@ -86607,10 +86607,10 @@
       </union-decl>
       <union-decl name='__anonymous_union__' size-in-bits='64' is-anonymous='yes' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1' id='ac5ab65f'>
         <data-member access='public'>
-          <var-decl name='' type-id='e7f4404a' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1'/>
+          <var-decl name='' type-id='e7f44049' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1'/>
         </data-member>
         <data-member access='public'>
-          <var-decl name='' type-id='e7f44049' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1'/>
+          <var-decl name='' type-id='e7f4404a' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1'/>
         </data-member>
         <data-member access='public'>
           <var-decl name='' type-id='ac5ab597' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1'/>
@@ -119986,15 +119986,15 @@
       </class-decl>
       <class-decl name='__anonymous_struct__' size-in-bits='64' is-struct='yes' is-anonymous='yes' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1' id='e7f44049'>
         <data-member access='public' layout-offset-in-bits='0'>
-          <var-decl name='android_kabi_reserved4' type-id='91ce1af9' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1'/>
-        </data-member>
-      </class-decl>
-      <class-decl name='__anonymous_struct__' size-in-bits='64' is-struct='yes' is-anonymous='yes' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1' id='e7f4404a'>
-        <data-member access='public' layout-offset-in-bits='0'>
           <var-decl name='ra_honor_pio_pflag' type-id='8f048e17' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1'/>
         </data-member>
         <data-member access='public' layout-offset-in-bits='8'>
           <var-decl name='padding4' type-id='c20b850f' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1'/>
+        </data-member>
+      </class-decl>
+      <class-decl name='__anonymous_struct__' size-in-bits='64' is-struct='yes' is-anonymous='yes' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1' id='e7f4404a'>
+        <data-member access='public' layout-offset-in-bits='0'>
+          <var-decl name='android_kabi_reserved4' type-id='91ce1af9' visibility='default' filepath='include/linux/ipv6.h' line='93' column='1'/>
         </data-member>
       </class-decl>
       <class-decl name='__anonymous_struct__' size-in-bits='224' is-struct='yes' is-anonymous='yes' visibility='default' filepath='mm/vmscan.c' line='163' column='1' id='e7f4404b'>
@@ -135674,9 +135674,9 @@
         <parameter type-id='e9265215' name='ret' filepath='include/trace/hooks/mm.h' line='335' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='__traceiter_android_vh_filemap_page_mapped' mangled-name='__traceiter_android_vh_filemap_page_mapped' filepath='include/trace/hooks/mm.h' line='403' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_filemap_page_mapped'>
-        <parameter type-id='eaa32e2f' name='__data' filepath='include/trace/hooks/mm.h' line='403' column='1'/>
-        <parameter type-id='02f11ed4' name='page' filepath='include/trace/hooks/mm.h' line='403' column='1'/>
+      <function-decl name='__traceiter_android_vh_filemap_page_mapped' mangled-name='__traceiter_android_vh_filemap_page_mapped' filepath='include/trace/hooks/mm.h' line='380' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_filemap_page_mapped'>
+        <parameter type-id='eaa32e2f' name='__data' filepath='include/trace/hooks/mm.h' line='380' column='1'/>
+        <parameter type-id='02f11ed4' name='page' filepath='include/trace/hooks/mm.h' line='380' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
       <function-decl name='__traceiter_android_vh_filemap_pages' mangled-name='__traceiter_android_vh_filemap_pages' filepath='include/trace/hooks/mm.h' line='231' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_filemap_pages'>
@@ -135865,10 +135865,10 @@
         <parameter type-id='7292109c' name='ret' filepath='include/trace/hooks/fault.h' line='33' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='__traceiter_android_vh_init_adjust_zone_wmark' mangled-name='__traceiter_android_vh_init_adjust_zone_wmark' filepath='include/trace/hooks/mm.h' line='413' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_init_adjust_zone_wmark'>
-        <parameter type-id='eaa32e2f' name='__data' filepath='include/trace/hooks/mm.h' line='413' column='1'/>
-        <parameter type-id='0a0aff97' name='zone' filepath='include/trace/hooks/mm.h' line='413' column='1'/>
-        <parameter type-id='91ce1af9' name='interval' filepath='include/trace/hooks/mm.h' line='413' column='1'/>
+      <function-decl name='__traceiter_android_vh_init_adjust_zone_wmark' mangled-name='__traceiter_android_vh_init_adjust_zone_wmark' filepath='include/trace/hooks/mm.h' line='390' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_init_adjust_zone_wmark'>
+        <parameter type-id='eaa32e2f' name='__data' filepath='include/trace/hooks/mm.h' line='390' column='1'/>
+        <parameter type-id='0a0aff97' name='zone' filepath='include/trace/hooks/mm.h' line='390' column='1'/>
+        <parameter type-id='91ce1af9' name='interval' filepath='include/trace/hooks/mm.h' line='390' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
       <function-decl name='__traceiter_android_vh_init_aes_encrypt' mangled-name='__traceiter_android_vh_init_aes_encrypt' filepath='include/trace/hooks/bl_hib.h' line='30' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_init_aes_encrypt'>
@@ -136034,15 +136034,15 @@
         <parameter type-id='80f25feb' name='iocb' filepath='include/trace/hooks/loop.h' line='14' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='__traceiter_android_vh_lru_cache_add' mangled-name='__traceiter_android_vh_lru_cache_add' filepath='include/trace/hooks/mm.h' line='394' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_lru_cache_add'>
-        <parameter type-id='eaa32e2f' name='__data' filepath='include/trace/hooks/mm.h' line='394' column='1'/>
-        <parameter type-id='02f11ed4' name='page' filepath='include/trace/hooks/mm.h' line='394' column='1'/>
+      <function-decl name='__traceiter_android_vh_lru_cache_add' mangled-name='__traceiter_android_vh_lru_cache_add' filepath='include/trace/hooks/mm.h' line='371' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_lru_cache_add'>
+        <parameter type-id='eaa32e2f' name='__data' filepath='include/trace/hooks/mm.h' line='371' column='1'/>
+        <parameter type-id='02f11ed4' name='page' filepath='include/trace/hooks/mm.h' line='371' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='__traceiter_android_vh_lru_cache_add_page_activate' mangled-name='__traceiter_android_vh_lru_cache_add_page_activate' filepath='include/trace/hooks/mm.h' line='397' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_lru_cache_add_page_activate'>
-        <parameter type-id='eaa32e2f' name='__data' filepath='include/trace/hooks/mm.h' line='397' column='1'/>
-        <parameter type-id='02f11ed4' name='page' filepath='include/trace/hooks/mm.h' line='397' column='1'/>
-        <parameter type-id='d8e6b335' name='bypass' filepath='include/trace/hooks/mm.h' line='397' column='1'/>
+      <function-decl name='__traceiter_android_vh_lru_cache_add_page_activate' mangled-name='__traceiter_android_vh_lru_cache_add_page_activate' filepath='include/trace/hooks/mm.h' line='374' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_lru_cache_add_page_activate'>
+        <parameter type-id='eaa32e2f' name='__data' filepath='include/trace/hooks/mm.h' line='374' column='1'/>
+        <parameter type-id='02f11ed4' name='page' filepath='include/trace/hooks/mm.h' line='374' column='1'/>
+        <parameter type-id='d8e6b335' name='bypass' filepath='include/trace/hooks/mm.h' line='374' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
       <function-decl name='__traceiter_android_vh_lru_gen_add_page_skip' mangled-name='__traceiter_android_vh_lru_gen_add_page_skip' filepath='include/trace/hooks/mm.h' line='234' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_lru_gen_add_page_skip'>
@@ -137322,9 +137322,9 @@
         <parameter type-id='7292109c' name='ret' filepath='include/trace/hooks/usb.h' line='25' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='__traceiter_android_vh_zap_pte_range_page_remove_rmap' mangled-name='__traceiter_android_vh_zap_pte_range_page_remove_rmap' filepath='include/trace/hooks/mm.h' line='406' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_zap_pte_range_page_remove_rmap'>
-        <parameter type-id='eaa32e2f' name='__data' filepath='include/trace/hooks/mm.h' line='406' column='1'/>
-        <parameter type-id='02f11ed4' name='page' filepath='include/trace/hooks/mm.h' line='406' column='1'/>
+      <function-decl name='__traceiter_android_vh_zap_pte_range_page_remove_rmap' mangled-name='__traceiter_android_vh_zap_pte_range_page_remove_rmap' filepath='include/trace/hooks/mm.h' line='383' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_android_vh_zap_pte_range_page_remove_rmap'>
+        <parameter type-id='eaa32e2f' name='__data' filepath='include/trace/hooks/mm.h' line='383' column='1'/>
+        <parameter type-id='02f11ed4' name='page' filepath='include/trace/hooks/mm.h' line='383' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
       <function-decl name='__traceiter_binder_transaction_received' mangled-name='__traceiter_binder_transaction_received' filepath='drivers/android/./binder_trace.h' line='179' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__traceiter_binder_transaction_received'>
@@ -138164,7 +138164,7 @@
       <var-decl name='__tracepoint_android_vh_gic_v2_resume' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_gic_v2_resume' visibility='default' filepath='include/trace/hooks/gic.h' line='22' column='1' elf-symbol-id='__tracepoint_android_vh_gic_v2_resume'/>
       <var-decl name='__tracepoint_android_vh_handle_failed_page_trylock' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_handle_failed_page_trylock' visibility='default' filepath='include/trace/hooks/vmscan.h' line='24' column='1' elf-symbol-id='__tracepoint_android_vh_handle_failed_page_trylock'/>
       <var-decl name='__tracepoint_android_vh_handle_tlb_conf' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_handle_tlb_conf' visibility='default' filepath='include/trace/hooks/fault.h' line='33' column='1' elf-symbol-id='__tracepoint_android_vh_handle_tlb_conf'/>
-      <var-decl name='__tracepoint_android_vh_init_adjust_zone_wmark' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_init_adjust_zone_wmark' visibility='default' filepath='include/trace/hooks/mm.h' line='413' column='1' elf-symbol-id='__tracepoint_android_vh_init_adjust_zone_wmark'/>
+      <var-decl name='__tracepoint_android_vh_init_adjust_zone_wmark' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_init_adjust_zone_wmark' visibility='default' filepath='include/trace/hooks/mm.h' line='390' column='1' elf-symbol-id='__tracepoint_android_vh_init_adjust_zone_wmark'/>
       <var-decl name='__tracepoint_android_vh_init_aes_encrypt' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_init_aes_encrypt' visibility='default' filepath='include/trace/hooks/bl_hib.h' line='30' column='1' elf-symbol-id='__tracepoint_android_vh_init_aes_encrypt'/>
       <var-decl name='__tracepoint_android_vh_inode_lru_isolate' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_inode_lru_isolate' visibility='default' filepath='include/trace/hooks/vmscan.h' line='77' column='1' elf-symbol-id='__tracepoint_android_vh_inode_lru_isolate'/>
       <var-decl name='__tracepoint_android_vh_invalidate_mapping_pagevec' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_invalidate_mapping_pagevec' visibility='default' filepath='include/trace/hooks/vmscan.h' line='80' column='1' elf-symbol-id='__tracepoint_android_vh_invalidate_mapping_pagevec'/>
@@ -138399,7 +138399,7 @@
       <var-decl name='__tracepoint_android_vh_watchdog_timer_softlockup' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_watchdog_timer_softlockup' visibility='default' filepath='include/trace/hooks/softlockup.h' line='16' column='1' elf-symbol-id='__tracepoint_android_vh_watchdog_timer_softlockup'/>
       <var-decl name='__tracepoint_android_vh_wq_lockup_pool' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_wq_lockup_pool' visibility='default' filepath='include/trace/hooks/wqlockup.h' line='13' column='1' elf-symbol-id='__tracepoint_android_vh_wq_lockup_pool'/>
       <var-decl name='__tracepoint_android_vh_xhci_urb_suitable_bypass' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_xhci_urb_suitable_bypass' visibility='default' filepath='include/trace/hooks/usb.h' line='25' column='1' elf-symbol-id='__tracepoint_android_vh_xhci_urb_suitable_bypass'/>
-      <var-decl name='__tracepoint_android_vh_zap_pte_range_page_remove_rmap' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_zap_pte_range_page_remove_rmap' visibility='default' filepath='include/trace/hooks/mm.h' line='406' column='1' elf-symbol-id='__tracepoint_android_vh_zap_pte_range_page_remove_rmap'/>
+      <var-decl name='__tracepoint_android_vh_zap_pte_range_page_remove_rmap' type-id='4ca0c298' mangled-name='__tracepoint_android_vh_zap_pte_range_page_remove_rmap' visibility='default' filepath='include/trace/hooks/mm.h' line='383' column='1' elf-symbol-id='__tracepoint_android_vh_zap_pte_range_page_remove_rmap'/>
       <var-decl name='__tracepoint_binder_transaction_received' type-id='4ca0c298' mangled-name='__tracepoint_binder_transaction_received' visibility='default' filepath='drivers/android/./binder_trace.h' line='179' column='1' elf-symbol-id='__tracepoint_binder_transaction_received'/>
       <var-decl name='__tracepoint_binder_txn_latency_free' type-id='4ca0c298' mangled-name='__tracepoint_binder_txn_latency_free' visibility='default' filepath='drivers/android/./binder_trace.h' line='122' column='1' elf-symbol-id='__tracepoint_binder_txn_latency_free'/>
       <var-decl name='__tracepoint_block_bio_complete' type-id='4ca0c298' mangled-name='__tracepoint_block_bio_complete' visibility='default' filepath='include/trace/events/block.h' line='252' column='1' elf-symbol-id='__tracepoint_block_bio_complete'/>
@@ -165830,31 +165830,31 @@
         <parameter type-id='95e97e5e' name='num_controls' filepath='sound/soc/soc-core.c' line='2312' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_bytes_get' mangled-name='snd_soc_bytes_get' filepath='sound/soc/soc-ops.c' line='710' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_bytes_get'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='710' column='1'/>
-        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='711' column='1'/>
+      <function-decl name='snd_soc_bytes_get' mangled-name='snd_soc_bytes_get' filepath='sound/soc/soc-ops.c' line='720' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_bytes_get'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='720' column='1'/>
+        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='721' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_bytes_info' mangled-name='snd_soc_bytes_info' filepath='sound/soc/soc-ops.c' line='697' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_bytes_info'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='697' column='1'/>
-        <parameter type-id='0e291009' name='uinfo' filepath='sound/soc/soc-ops.c' line='698' column='1'/>
+      <function-decl name='snd_soc_bytes_info' mangled-name='snd_soc_bytes_info' filepath='sound/soc/soc-ops.c' line='707' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_bytes_info'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='707' column='1'/>
+        <parameter type-id='0e291009' name='uinfo' filepath='sound/soc/soc-ops.c' line='708' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_bytes_info_ext' mangled-name='snd_soc_bytes_info_ext' filepath='sound/soc/soc-ops.c' line='830' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_bytes_info_ext'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='830' column='1'/>
-        <parameter type-id='0e291009' name='ucontrol' filepath='sound/soc/soc-ops.c' line='831' column='1'/>
+      <function-decl name='snd_soc_bytes_info_ext' mangled-name='snd_soc_bytes_info_ext' filepath='sound/soc/soc-ops.c' line='840' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_bytes_info_ext'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='840' column='1'/>
+        <parameter type-id='0e291009' name='ucontrol' filepath='sound/soc/soc-ops.c' line='841' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_bytes_put' mangled-name='snd_soc_bytes_put' filepath='sound/soc/soc-ops.c' line='747' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_bytes_put'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='747' column='1'/>
-        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='748' column='1'/>
+      <function-decl name='snd_soc_bytes_put' mangled-name='snd_soc_bytes_put' filepath='sound/soc/soc-ops.c' line='757' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_bytes_put'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='757' column='1'/>
+        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='758' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_bytes_tlv_callback' mangled-name='snd_soc_bytes_tlv_callback' filepath='sound/soc/soc-ops.c' line='842' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_bytes_tlv_callback'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='842' column='1'/>
-        <parameter type-id='95e97e5e' name='op_flag' filepath='sound/soc/soc-ops.c' line='842' column='1'/>
-        <parameter type-id='f0981eeb' name='size' filepath='sound/soc/soc-ops.c' line='843' column='1'/>
-        <parameter type-id='807869d3' name='tlv' filepath='sound/soc/soc-ops.c' line='843' column='1'/>
+      <function-decl name='snd_soc_bytes_tlv_callback' mangled-name='snd_soc_bytes_tlv_callback' filepath='sound/soc/soc-ops.c' line='852' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_bytes_tlv_callback'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='852' column='1'/>
+        <parameter type-id='95e97e5e' name='op_flag' filepath='sound/soc/soc-ops.c' line='852' column='1'/>
+        <parameter type-id='f0981eeb' name='size' filepath='sound/soc/soc-ops.c' line='853' column='1'/>
+        <parameter type-id='807869d3' name='tlv' filepath='sound/soc/soc-ops.c' line='853' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
       <function-decl name='snd_soc_card_get_kcontrol' mangled-name='snd_soc_card_get_kcontrol' filepath='sound/soc/soc-card.c' line='29' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_card_get_kcontrol'>
@@ -166215,29 +166215,29 @@
         <parameter type-id='af5a73b0' name='dai_link' filepath='sound/soc/soc-core.c' line='347' column='1'/>
         <return type-id='95316552'/>
       </function-decl>
-      <function-decl name='snd_soc_get_volsw' mangled-name='snd_soc_get_volsw' filepath='sound/soc/soc-ops.c' line='247' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_get_volsw'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='247' column='1'/>
-        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='248' column='1'/>
+      <function-decl name='snd_soc_get_volsw' mangled-name='snd_soc_get_volsw' filepath='sound/soc/soc-ops.c' line='248' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_get_volsw'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='248' column='1'/>
+        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='249' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_get_volsw_range' mangled-name='snd_soc_get_volsw_range' filepath='sound/soc/soc-ops.c' line='596' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_get_volsw_range'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='596' column='1'/>
-        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='597' column='1'/>
+      <function-decl name='snd_soc_get_volsw_range' mangled-name='snd_soc_get_volsw_range' filepath='sound/soc/soc-ops.c' line='606' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_get_volsw_range'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='606' column='1'/>
+        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='607' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_get_volsw_sx' mangled-name='snd_soc_get_volsw_sx' filepath='sound/soc/soc-ops.c' line='389' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_get_volsw_sx'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='389' column='1'/>
-        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='390' column='1'/>
+      <function-decl name='snd_soc_get_volsw_sx' mangled-name='snd_soc_get_volsw_sx' filepath='sound/soc/soc-ops.c' line='399' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_get_volsw_sx'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='399' column='1'/>
+        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='400' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_get_xr_sx' mangled-name='snd_soc_get_xr_sx' filepath='sound/soc/soc-ops.c' line='901' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_get_xr_sx'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='901' column='1'/>
-        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='902' column='1'/>
+      <function-decl name='snd_soc_get_xr_sx' mangled-name='snd_soc_get_xr_sx' filepath='sound/soc/soc-ops.c' line='911' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_get_xr_sx'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='911' column='1'/>
+        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='912' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_info_enum_double' mangled-name='snd_soc_info_enum_double' filepath='sound/soc/soc-ops.c' line='40' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_info_enum_double'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='40' column='1'/>
-        <parameter type-id='0e291009' name='uinfo' filepath='sound/soc/soc-ops.c' line='41' column='1'/>
+      <function-decl name='snd_soc_info_enum_double' mangled-name='snd_soc_info_enum_double' filepath='sound/soc/soc-ops.c' line='41' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_info_enum_double'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='41' column='1'/>
+        <parameter type-id='0e291009' name='uinfo' filepath='sound/soc/soc-ops.c' line='42' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
       <function-decl name='snd_soc_info_multi_ext' mangled-name='snd_soc_info_multi_ext' filepath='sound/soc/soc-core.c' line='3217' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_info_multi_ext'>
@@ -166250,19 +166250,19 @@
         <parameter type-id='0e291009' name='uinfo' filepath='sound/soc/soc-ops.c' line='176' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_info_volsw_range' mangled-name='snd_soc_info_volsw_range' filepath='sound/soc/soc-ops.c' line='494' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_info_volsw_range'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='494' column='1'/>
-        <parameter type-id='0e291009' name='uinfo' filepath='sound/soc/soc-ops.c' line='495' column='1'/>
+      <function-decl name='snd_soc_info_volsw_range' mangled-name='snd_soc_info_volsw_range' filepath='sound/soc/soc-ops.c' line='504' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_info_volsw_range'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='504' column='1'/>
+        <parameter type-id='0e291009' name='uinfo' filepath='sound/soc/soc-ops.c' line='505' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_info_volsw_sx' mangled-name='snd_soc_info_volsw_sx' filepath='sound/soc/soc-ops.c' line='212' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_info_volsw_sx'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='212' column='1'/>
-        <parameter type-id='0e291009' name='uinfo' filepath='sound/soc/soc-ops.c' line='213' column='1'/>
+      <function-decl name='snd_soc_info_volsw_sx' mangled-name='snd_soc_info_volsw_sx' filepath='sound/soc/soc-ops.c' line='213' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_info_volsw_sx'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='213' column='1'/>
+        <parameter type-id='0e291009' name='uinfo' filepath='sound/soc/soc-ops.c' line='214' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_info_xr_sx' mangled-name='snd_soc_info_xr_sx' filepath='sound/soc/soc-ops.c' line='874' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_info_xr_sx'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='874' column='1'/>
-        <parameter type-id='0e291009' name='uinfo' filepath='sound/soc/soc-ops.c' line='875' column='1'/>
+      <function-decl name='snd_soc_info_xr_sx' mangled-name='snd_soc_info_xr_sx' filepath='sound/soc/soc-ops.c' line='884' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_info_xr_sx'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='884' column='1'/>
+        <parameter type-id='0e291009' name='uinfo' filepath='sound/soc/soc-ops.c' line='885' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
       <function-decl name='snd_soc_jack_add_gpios' mangled-name='snd_soc_jack_add_gpios' filepath='sound/soc/soc-jack.c' line='311' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_jack_add_gpios'>
@@ -166288,10 +166288,10 @@
         <parameter type-id='95e97e5e' name='mask' filepath='sound/soc/soc-jack.c' line='34' column='1'/>
         <return type-id='48b5725f'/>
       </function-decl>
-      <function-decl name='snd_soc_limit_volume' mangled-name='snd_soc_limit_volume' filepath='sound/soc/soc-ops.c' line='675' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_limit_volume'>
-        <parameter type-id='3059cd0b' name='card' filepath='sound/soc/soc-ops.c' line='675' column='1'/>
-        <parameter type-id='80f4b756' name='name' filepath='sound/soc/soc-ops.c' line='676' column='1'/>
-        <parameter type-id='95e97e5e' name='max' filepath='sound/soc/soc-ops.c' line='676' column='1'/>
+      <function-decl name='snd_soc_limit_volume' mangled-name='snd_soc_limit_volume' filepath='sound/soc/soc-ops.c' line='685' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_limit_volume'>
+        <parameter type-id='3059cd0b' name='card' filepath='sound/soc/soc-ops.c' line='685' column='1'/>
+        <parameter type-id='80f4b756' name='name' filepath='sound/soc/soc-ops.c' line='686' column='1'/>
+        <parameter type-id='95e97e5e' name='max' filepath='sound/soc/soc-ops.c' line='686' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
       <function-decl name='snd_soc_lookup_component' mangled-name='snd_soc_lookup_component' filepath='sound/soc/soc-core.c' line='332' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_lookup_component'>
@@ -166383,24 +166383,24 @@
         <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='91' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_put_volsw' mangled-name='snd_soc_put_volsw' filepath='sound/soc/soc-ops.c' line='307' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_put_volsw'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='307' column='1'/>
-        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='308' column='1'/>
+      <function-decl name='snd_soc_put_volsw' mangled-name='snd_soc_put_volsw' filepath='sound/soc/soc-ops.c' line='308' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_put_volsw'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='308' column='1'/>
+        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='309' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_put_volsw_range' mangled-name='snd_soc_put_volsw_range' filepath='sound/soc/soc-ops.c' line='523' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_put_volsw_range'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='523' column='1'/>
-        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='524' column='1'/>
+      <function-decl name='snd_soc_put_volsw_range' mangled-name='snd_soc_put_volsw_range' filepath='sound/soc/soc-ops.c' line='533' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_put_volsw_range'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='533' column='1'/>
+        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='534' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_put_volsw_sx' mangled-name='snd_soc_put_volsw_sx' filepath='sound/soc/soc-ops.c' line='426' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_put_volsw_sx'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='426' column='1'/>
-        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='427' column='1'/>
+      <function-decl name='snd_soc_put_volsw_sx' mangled-name='snd_soc_put_volsw_sx' filepath='sound/soc/soc-ops.c' line='436' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_put_volsw_sx'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='436' column='1'/>
+        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='437' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
-      <function-decl name='snd_soc_put_xr_sx' mangled-name='snd_soc_put_xr_sx' filepath='sound/soc/soc-ops.c' line='946' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_put_xr_sx'>
-        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='946' column='1'/>
-        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='947' column='1'/>
+      <function-decl name='snd_soc_put_xr_sx' mangled-name='snd_soc_put_xr_sx' filepath='sound/soc/soc-ops.c' line='956' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_put_xr_sx'>
+        <parameter type-id='7a5054b7' name='kcontrol' filepath='sound/soc/soc-ops.c' line='956' column='1'/>
+        <parameter type-id='144a5d4c' name='ucontrol' filepath='sound/soc/soc-ops.c' line='957' column='1'/>
         <return type-id='95e97e5e'/>
       </function-decl>
       <function-decl name='snd_soc_register_card' mangled-name='snd_soc_register_card' filepath='sound/soc/soc-core.c' line='2327' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='snd_soc_register_card'>
@@ -173534,7 +173534,6 @@
     </abi-instr>
   </abi-corpus>
 </abi-corpus-group>
-
 <!--
      libabigail: abidw: 2.1.0SOONG BUILD NUMBER PLACEHOLDER
 -->

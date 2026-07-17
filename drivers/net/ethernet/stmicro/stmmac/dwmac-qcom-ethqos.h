@@ -590,7 +590,6 @@ struct qcom_ethqos {
 	refcount_t ps_refcount;
 	bool clk_active;
 	bool clk_gated;
-#endif
 };
 
 struct pps_cfg {

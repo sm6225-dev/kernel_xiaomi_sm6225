@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
-// Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/debugfs.h>
@@ -10,7 +8,6 @@
 
 #include "dwmac-qcom-serdes.h"
 
-#if IS_ENABLED(CONFIG_ETHQOS_QCOM_VER4)
 void qcom_ethqos_serdes_power_down(struct qcom_ethqos *ethqos)
 {
 	writel_relaxed(0x08, ethqos->sgmii_base + QSERDES_PCS_TX_MID_TERM_CTRL2);
@@ -23,7 +20,6 @@ void qcom_ethqos_serdes_power_down(struct qcom_ethqos *ethqos)
 	/* Set current speed to 0 so that serdes will be reprogrammed on next link up. */
 	ethqos->curr_serdes_speed = 0;
 }
-#endif
 
 void qcom_ethqos_serdes_phy_soft_reset(struct qcom_ethqos *ethqos)
 {
@@ -583,7 +579,7 @@ static int qcom_ethqos_serdes_sgmii_1Gb(struct qcom_ethqos *ethqos)
 	writel_relaxed(0x09, ethqos->sgmii_base + QSERDES_TX0_RES_CODE_LANE_OFFSET_RX);
 	writel_relaxed(0xF5, ethqos->sgmii_base + QSERDES_TX0_LANE_MODE_1);
 	writel_relaxed(0x02, ethqos->sgmii_base + QSERDES_TX0_LANE_MODE_2);
-	writel_relaxed(0x3F, ethqos->sgmii_base + QSERDES_TX0_LANE_MODE_3);
+	writel_relaxed(0x00, ethqos->sgmii_base + QSERDES_TX0_LANE_MODE_3);
 	writel_relaxed(0x3F, ethqos->sgmii_base + QSERDES_TX_LANE_MODE_4);
 	writel_relaxed(0x5F, ethqos->sgmii_base + QSERDES_TX_LANE_MODE_5);
 	writel_relaxed(0x12, ethqos->sgmii_base + QSERDES_TX0_RCV_DETECT_LVL_2);

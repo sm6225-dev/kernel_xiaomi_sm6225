@@ -1298,6 +1298,11 @@ static void stmmac_mac_link_down(struct phylink_config *config,
 	int val = 0;
 	u64 ns = 0;
 
+	if (!priv) {
+		pr_err("priv is NULL\n");
+		return;
+	}
+
 #if IS_ENABLED(CONFIG_DWMAC_QCOM_VER3)
 	if (priv->plat->fix_mac_speed) {
 		priv->plat->fix_mac_speed(priv->plat->bsp_priv, SPEED_10);
@@ -1342,16 +1347,11 @@ static void stmmac_mac_link_down(struct phylink_config *config,
 
 	if (priv->dma_cap.fpesel)
 		stmmac_fpe_link_state_handle(priv, false);
-#if IS_ENABLED(CONFIG_ETHQOS_QCOM_VER4)
+
 	if (priv->plat->enable_power_saving)
 		ret = priv->plat->enable_power_saving(priv->dev, true);
 
 	netdev_info(priv->dev, "enable power saving ret = %d\n", ret);
-#else
-	if (priv->plat->serdes_powersaving)
-		priv->plat->serdes_powersaving(to_net_dev(config->dev),
-					       priv->plat->bsp_priv, false, false);
-#endif
 }
 
 static void stmmac_mac_link_up(struct phylink_config *config,
@@ -1374,16 +1374,11 @@ static void stmmac_mac_link_up(struct phylink_config *config,
 		priv->plat->phy_interface = interface;
 	}
 
-#if IS_ENABLED(CONFIG_ETHQOS_QCOM_VER4)
 	if (priv->plat->enable_power_saving)
 		ret = priv->plat->enable_power_saving(priv->dev, false);
 
 	netdev_info(priv->dev, "enable power saving ret = %d\n", ret);
-#else
-	if (priv->plat->serdes_powersaving)
-		priv->plat->serdes_powersaving(to_net_dev(config->dev),
-							  priv->plat->bsp_priv, true, true);
-#endif
+
 	if (priv->hw->qxpcs) {
 		ret = qcom_xpcs_serdes_loopback(priv->hw->qxpcs, false);
 		if (ret < 0)
@@ -3324,7 +3319,7 @@ static void stmmac_dma_interrupt(struct stmmac_priv *priv)
 	u32 rx_channel_count = priv->plat->rx_queues_to_use;
 	u32 channels_to_check = tx_channel_count > rx_channel_count ?
 				tx_channel_count : rx_channel_count;
-	u32 chan;
+	int chan;
 	int status[MAX_T(u32, MTL_MAX_TX_QUEUES, MTL_MAX_RX_QUEUES)];
 
 	/* Make sure we never check beyond our status buffer. */
@@ -4567,10 +4562,9 @@ static int stmmac_open(struct net_device *dev)
 	int mode = priv->plat->phy_interface;
 	int bfsize = 0;
 	u32 chan;
-	int ret;
+	int ret, res;
 	u32 rx_channel_count = priv->plat->rx_queues_to_use;
 
-#if IS_ENABLED(CONFIG_ETHQOS_QCOM_VER4)
 	/* We cannot wait indefinitely as we are holding the RTNL lock. */
 	ret = wait_for_completion_interruptible_timeout(&priv->probe_done, msecs_to_jiffies(10));
 	if (ret == 0 || ret == -ERESTARTSYS) {
@@ -4579,7 +4573,6 @@ static int stmmac_open(struct net_device *dev)
 			   __func__, ret);
 		return -ERESTARTSYS;
 	}
-#endif
 
 	ret = pm_runtime_get_sync(priv->device);
 	if (ret < 0) {
@@ -4587,10 +4580,8 @@ static int stmmac_open(struct net_device *dev)
 		return ret;
 	}
 
-#if IS_ENABLED(CONFIG_ETHQOS_QCOM_VER4)
 	if (priv->plat->enable_power_saving)
 		priv->plat->enable_power_saving(priv->dev, false);
-#endif
 
 	if (!priv->plat->mac2mac_en &&
 	    (!priv->plat->fixed_phy_mode ||
@@ -4738,12 +4729,10 @@ static int stmmac_open(struct net_device *dev)
 		netdev_info(priv->dev, "OpenAVB will not work, explicitly add VLAN");
 	}
 
-#if IS_ENABLED(CONFIG_ETHQOS_QCOM_VER4)
 	if (priv->plat->enable_power_saving) {
 		ret = priv->plat->enable_power_saving(priv->dev, true);
 		netdev_info(priv->dev, "%s enable power saving", __func__, ret);
 	}
-#endif
 	return 0;
 
 irq_error:
@@ -4762,12 +4751,10 @@ dma_desc_error:
 init_phy_error:
 	pm_runtime_put(priv->device);
 
-#if IS_ENABLED(CONFIG_ETHQOS_QCOM_VER4)
 	if (priv->plat->enable_power_saving) {
-		ret = priv->plat->enable_power_saving(priv->dev, true);
-		netdev_info(priv->dev, "%s enable power saving for error case", __func__, ret);
+		res = priv->plat->enable_power_saving(priv->dev, true);
+		netdev_info(priv->dev, "%s enable power saving for error case", __func__, res);
 	}
-#endif
 
 	return ret;
 }
@@ -5113,10 +5100,10 @@ static netdev_tx_t stmmac_tso_xmit(struct sk_buff *skb, struct net_device *dev)
 	if (dma_mapping_error(GET_MEM_PDEV_DEV, des))
 		goto dma_map_err;
 
-        tx_q->tx_skbuff_dma[first_entry].buf = des;
-        tx_q->tx_skbuff_dma[first_entry].len = skb_headlen(skb);
-        tx_q->tx_skbuff_dma[first_entry].map_as_page = false;
-        tx_q->tx_skbuff_dma[first_entry].buf_type = STMMAC_TXBUF_T_SKB;
+	tx_q->tx_skbuff_dma[first_entry].buf = des;
+	tx_q->tx_skbuff_dma[first_entry].len = skb_headlen(skb);
+	tx_q->tx_skbuff_dma[first_entry].map_as_page = false;
+	tx_q->tx_skbuff_dma[first_entry].buf_type = STMMAC_TXBUF_T_SKB;
 
 	if (priv->dma_cap.addr64 <= 32) {
 		first->des0 = cpu_to_le32(des);
@@ -6329,6 +6316,7 @@ read_again:
 			if (buf2_len)
 				buf2_len -= ETH_FCS_LEN;
 			else
+				buf1_len -= ETH_FCS_LEN;
 
 			len -= ETH_FCS_LEN;
 		}
@@ -6608,7 +6596,7 @@ static void stmmac_set_rx_mode(struct net_device *dev)
 			if (!memcmp(dst_eapol_mac_addr, ha->addr, ETH_ALEN))
 				mka_mcbcq_used = 1;
 		}
-		pr_info("Setting MCBCQ to queue %d\n", mka_mcbcq_used);
+		pr_debug("Setting MCBCQ to queue %d\n", mka_mcbcq_used);
 		stmmac_rx_queue_routing(priv, priv->hw, PACKET_MCBCQ, mka_mcbcq_used);
 	}
 	stmmac_set_filter(priv, priv->hw, dev);
@@ -8472,9 +8460,7 @@ int stmmac_dvr_probe(struct device *device,
 		goto error_phy_setup;
 	}
 
-#if IS_ENABLED(CONFIG_ETHQOS_QCOM_VER4)
 	init_completion(&priv->probe_done);
-#endif
 
 	ret = register_netdev(ndev);
 	if (ret) {

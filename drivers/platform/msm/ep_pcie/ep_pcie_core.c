@@ -64,6 +64,9 @@
 #define GEN_1_2_LTSSM_DETECT_TIMEOUT_MS	20 /* in msec */
 #define GEN_3_ABOVE_LTSSM_DETECT_TIMEOUT_MS	100 /* in msec */
 
+#define MMIO_OFFSET	0x100
+#define MMIO_RANGE	(0xb80 - MMIO_OFFSET)
+
 /* debug mask sys interface */
 static int ep_pcie_debug_mask;
 static int ep_pcie_debug_keep_resource;
@@ -155,6 +158,8 @@ static const struct ep_pcie_irq_info_t ep_pcie_irq_info[EP_PCIE_MAX_IRQ] = {
 
 static int ep_pcie_core_wakeup_host_internal(enum ep_pcie_event event);
 static void ep_pcie_config_inbound_iatu(struct ep_pcie_dev_t *dev, bool is_vf);
+static int ep_pcie_backup_mhi_mmio(struct ep_pcie_dev_t *dev);
+static int ep_pcie_restore_mhi_mmio(struct ep_pcie_dev_t *dev);
 
 /*
  * ep_pcie_clk_dump - Clock CBCR reg info will be dumped in Dmesg logs.
@@ -488,8 +493,8 @@ static int ep_pcie_vreg_enable(struct ep_pcie_dev_t *dev)
 				EP_PCIE_ERR(dev,
 					"PCIe V%d:  can't set voltage for %s: %d\n",
 					dev->rev, info->name, rc);
+				break;
 			}
-			break;
 		}
 
 		EP_PCIE_DBG(dev, "PCIe V%d: Vreg %s is being enabled\n",
@@ -1314,6 +1319,7 @@ static void ep_pcie_core_init(struct ep_pcie_dev_t *dev, bool configured)
 
 	ep_pcie_sriov_init(dev);
 	if (!configured) {
+		ep_pcie_restore_mhi_mmio(dev);
 		ep_pcie_config_mmio(dev);
 		ep_pcie_config_inbound_iatu(dev, PCIE_PHYSICAL_DEVICE);
 	}
@@ -1901,6 +1907,12 @@ static int ep_pcie_get_resources(struct ep_pcie_dev_t *dev,
 		EP_PCIE_ERR(dev,
 			"PCIe V%d: Failed to register bus client for %s,interconnect-names miss\n",
 			dev->rev, dev->pdev->name);
+	}
+
+	dev->mmio_backup = devm_kzalloc(&pdev->dev, MMIO_RANGE, GFP_KERNEL);
+	if (!dev->mmio_backup) {
+		EP_PCIE_ERR(dev, "PCIe V%d: mmio_backup alloc failed\n", dev->rev);
+		ret = -ENOMEM;
 	}
 
 out:
@@ -2703,6 +2715,7 @@ int ep_pcie_core_disable_endpoint(void)
 			EP_PCIE_DUMP(dev, "PCIe V%d: Global IRQ received; status:0x%x\n",
 					dev->rev, status);
 
+		ep_pcie_backup_mhi_mmio(dev);
 		ep_pcie_pipe_clk_deinit(dev);
 		ep_pcie_clk_deinit(dev);
 		ep_pcie_vreg_deinit(dev);
@@ -2737,6 +2750,11 @@ int ep_pcie_core_disable_endpoint(void)
 	if (atomic_read(&dev->host_wake_pending)) {
 		EP_PCIE_DBG(dev, "PCIe V%d: wake pending, init wakeup\n",
 			dev->rev);
+		/*
+		 * Clear the wake pending otherwise ep_pcie_core_wakeup_host_internal
+		 * will return without WAKE toggle
+		 */
+		atomic_set(&dev->host_wake_pending, 0);
 		ep_pcie_core_wakeup_host_internal(EP_PCIE_EVENT_PM_D3_COLD);
 	}
 
@@ -2899,6 +2917,70 @@ static irqreturn_t ep_pcie_handle_pm_turnoff_irq(int irq, void *data)
 	dev->link_status = EP_PCIE_LINK_IN_L23READY;
 
 	return IRQ_HANDLED;
+}
+
+static int ep_pcie_restore_mhi_mmio(struct ep_pcie_dev_t *dev)
+{
+	int i = 0;
+	void __iomem *reg_cntl_addr;
+
+	if (WARN_ON(!dev) && WARN_ON(!dev->mmio_backup)) {
+		EP_PCIE_ERR(dev, "PCIe V%d: invalid params for mmio restore\n",
+				dev->rev);
+		return -EINVAL;
+	}
+
+	if (!dev->mmio_backed) {
+		EP_PCIE_ERR(dev, "PCIe V%d: no backup for mmio restore\n",
+				dev->rev);
+		return 0;
+	}
+
+	/* disable ctrl/cmdb interrupts */
+	ep_pcie_write_reg(dev->mmio, PCIE20_MMIO_CTRL_INT_MASK_A7, 0);
+
+	/* disable ERDB interrupts */
+	for (i = 0; i < 4; i++)
+		ep_pcie_write_reg(dev->mmio, PCIE20_ERDB_INT_MASK_A7_n(i), 0);
+
+	reg_cntl_addr = (void __iomem *)(dev->mmio + MMIO_OFFSET);
+	memcpy_toio(reg_cntl_addr, dev->mmio_backup, MMIO_RANGE);
+
+	/* clear CHDB interrupts*/
+	for (i = 0; i < 4; i++)
+		ep_pcie_write_reg(dev->mmio, PCIE20_CHDB_INT_CLEAR_A7_n(i), 0xffffffff);
+	/* clear ERDB interrupts*/
+	for (i = 0; i < 4; i++)
+		ep_pcie_write_reg(dev->mmio, PCIE20_ERDB_INT_CLEAR_A7_n(i), 0xffffffff);
+
+	/* clear ctrl/cmdb interrupts */
+	ep_pcie_write_reg(dev->mmio, PCIE20_MMIO_CTRL_INT_CLEAR_A7, 0x7);
+
+	/* enable ctrl/cmdb interrupts */
+	ep_pcie_write_reg(dev->mmio, PCIE20_MMIO_CTRL_INT_MASK_A7, 0x3);
+
+	/* memory barrier to ensure write is visible */
+	mb();
+
+	dev->mmio_backed = false;
+
+	return 0;
+}
+
+static int ep_pcie_backup_mhi_mmio(struct ep_pcie_dev_t *dev)
+{
+	void __iomem *reg_cntl_addr;
+
+	if (WARN_ON(!dev) && WARN_ON(!dev->mmio_backup)) {
+		EP_PCIE_ERR(dev, "PCIe V%d: invalid paramsfor mmio backup\n", dev->rev);
+		return -EINVAL;
+	}
+
+	reg_cntl_addr = (void __iomem *)(dev->mmio + MMIO_OFFSET);
+	memcpy_fromio(dev->mmio_backup, reg_cntl_addr, MMIO_RANGE);
+	dev->mmio_backed = true;
+
+	return 0;
 }
 
 static irqreturn_t ep_pcie_handle_dstate_change_irq(int irq, void *data)
@@ -3065,6 +3147,9 @@ static irqreturn_t ep_pcie_handle_perst_irq(int irq, void *data)
 
 	perst = gpio_get_value(dev->gpio[EP_PCIE_GPIO_PERST].num);
 
+	EP_PCIE_DBG(dev, "PCIe V%d: PERST IRQ Handling\n",
+		dev->rev);
+
 	if (!dev->enumerated) {
 		EP_PCIE_DBG(dev,
 			"PCIe V%d: PCIe is not enumerated yet; PERST is %sasserted\n",
@@ -3083,6 +3168,7 @@ static irqreturn_t ep_pcie_handle_perst_irq(int irq, void *data)
 					"PCIe V%d: Acquired wakelock\n",
 					dev->rev);
 			}
+			dev->perst_deast_counter++;
 			/*
 			 * Perform link enumeration with the host side in the
 			 * bottom half
@@ -3150,6 +3236,16 @@ static irqreturn_t ep_pcie_handle_perst_deassert(int irq, void *data)
 			"PCIe V%d: Start enumeration due to PERST deassertion\n", dev->rev);
 		ep_pcie_enumeration(dev);
 	}
+
+	/*
+	 * perst_deast_thread_counter tracks the number of times the bottom half
+	 * (threaded handler) of the PERST deassertion interrupt is executed.
+	 * Helps compare with top half counter for debugging.
+	 */
+	dev->perst_deast_thread_counter++;
+	EP_PCIE_DBG(dev, "PCIe V%d: No. %ld PERST deassertion handled\n",
+		dev->rev, dev->perst_deast_thread_counter);
+
 	return IRQ_HANDLED;
 }
 
@@ -3560,6 +3656,11 @@ enum ep_pcie_link_status ep_pcie_core_get_linkstatus(void)
 {
 	struct ep_pcie_dev_t *dev = &ep_pcie_dev;
 	u32 bme;
+
+	if (dev->link_status == EP_PCIE_LINK_INVALID) {
+		EP_PCIE_INFO(&ep_pcie_dev, "PCIe V%d: Non PCIe Boot\n", ep_pcie_dev.rev);
+		return EP_PCIE_LINK_INVALID;
+	}
 
 	if (!dev->power_on || (dev->link_status == EP_PCIE_LINK_DISABLED)) {
 		EP_PCIE_DBG(dev,
@@ -4393,14 +4494,54 @@ static void ep_pcie_tcsr_aoss_data_dt(struct platform_device *pdev)
 static int ep_pcie_probe(struct platform_device *pdev)
 {
 	int ret, num_ipc_pages_dev_fac;
-	u32 sriov_mask = 0;
+	u32 dev_id, sriov_mask = 0;
 	char logname[MAX_NAME_LEN];
+
+	ep_pcie_dev.vendor_id = 0xFFFF;
+	ret = of_property_read_u16((&pdev->dev)->of_node,
+				   "qcom,pcie-vendor-id",
+				   &ep_pcie_dev.vendor_id);
+	if (ret)
+		EP_PCIE_DBG(&ep_pcie_dev,
+			   "PCIe V%d: pcie-vendor-id does not exist.\n",
+			   ep_pcie_dev.rev);
+	else
+		EP_PCIE_DBG(&ep_pcie_dev, "PCIe V%d: pcie-vendor-id:%d.\n",
+				ep_pcie_dev.rev, ep_pcie_dev.vendor_id);
+
+	ep_pcie_dev.device_id = 0xFFFF;
+	ret = of_property_read_u16((&pdev->dev)->of_node,
+				"qcom,pcie-device-id",
+				&ep_pcie_dev.device_id);
+	if (ret)
+		EP_PCIE_DBG(&ep_pcie_dev,
+			   "PCIe V%d: pcie-device-id does not exist.\n",
+			   ep_pcie_dev.rev);
+	else
+		EP_PCIE_DBG(&ep_pcie_dev, "PCIe V%d: pcie-device-id:%d.\n",
+			   ep_pcie_dev.rev, ep_pcie_dev.device_id);
 
 	ret = is_pcie_boot_config(pdev);
 	if (ret) {
-		EP_PCIE_DBG(&ep_pcie_dev,
+		EP_PCIE_INFO(&ep_pcie_dev,
 			"PCIe V%d: boot_config is not PCIe\n",
 			ep_pcie_dev.rev);
+		/*
+		 * In a non-PCIe boot configuration, the EP-PCIe driver should probe successfully
+		 * without failing, to meet GCC sync state requirements. During such a boot,
+		 * the driver performs a dummy probe without real initialization.
+		 *
+		 * PCIe client drivers (e.g., MHI) cannot distinguish between a full probe and
+		 * a dummy probe. To address this, the link state is set to INVALID STATE during
+		 * a dummy probe. Client drivers can query this state to determine the probe type
+		 * and take appropriate actions for non-PCIe boot scenarios.
+		 */
+		dev_id = ep_pcie_dev.device_id;
+		dev_id = dev_id << 16 | ep_pcie_dev.vendor_id;
+		hw_drv.device_id = dev_id;
+
+		ep_pcie_dev.link_status = EP_PCIE_LINK_INVALID;
+		ep_pcie_register_drv(&hw_drv);
 		/*
 		 * For non-pcie boot config, instead of failing probe, simply return
 		 * success (without proceeding for any further initialization)
@@ -4465,30 +4606,6 @@ static int ep_pcie_probe(struct platform_device *pdev)
 	else
 		EP_PCIE_DBG(&ep_pcie_dev, "PCIe V%d: pcie-link-speed:%d\n",
 			ep_pcie_dev.rev, ep_pcie_dev.link_speed);
-
-	ep_pcie_dev.vendor_id = 0xFFFF;
-	ret = of_property_read_u16((&pdev->dev)->of_node,
-				"qcom,pcie-vendor-id",
-				&ep_pcie_dev.vendor_id);
-	if (ret)
-		EP_PCIE_DBG(&ep_pcie_dev,
-				"PCIe V%d: pcie-vendor-id does not exist.\n",
-				ep_pcie_dev.rev);
-	else
-		EP_PCIE_DBG(&ep_pcie_dev, "PCIe V%d: pcie-vendor-id:%d.\n",
-				ep_pcie_dev.rev, ep_pcie_dev.vendor_id);
-
-	ep_pcie_dev.device_id = 0xFFFF;
-	ret = of_property_read_u16((&pdev->dev)->of_node,
-				"qcom,pcie-device-id",
-				&ep_pcie_dev.device_id);
-	if (ret)
-		EP_PCIE_DBG(&ep_pcie_dev,
-				"PCIe V%d: pcie-device-id does not exist.\n",
-				ep_pcie_dev.rev);
-	else
-		EP_PCIE_DBG(&ep_pcie_dev, "PCIe V%d: pcie-device-id:%d.\n",
-				ep_pcie_dev.rev, ep_pcie_dev.device_id);
 
 	ret = of_property_read_u32((&pdev->dev)->of_node,
 				"qcom,dbi-base-reg",

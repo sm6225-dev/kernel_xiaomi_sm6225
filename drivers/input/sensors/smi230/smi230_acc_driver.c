@@ -638,46 +638,27 @@ static ssize_t smi230_acc_store_range(struct device *dev,
 	}
 
 	mutex_lock(&interrupt_handling_lock);
-	err = smi230_acc_set_meas_conf(p_smi230_dev);
-	if (err) {
-		PERR("setting range failed");
-		mutex_unlock(&interrupt_handling_lock);
-		return err;
-	}
-	msleep(1);
-	err = smi230_acc_get_regs(SMI230_ACCEL_RANGE_REG, &data, 1,
-				  p_smi230_dev);
-	if (err) {
-		PERR("read back range failed");
-		mutex_unlock(&interrupt_handling_lock);
-		return err;
-	}
+	err |= smi230_acc_set_meas_conf(p_smi230_dev);
+
+	usleep_range(1000, 1001);
+	err |= smi230_acc_get_regs(SMI230_ACCEL_RANGE_REG, &data, 1,
+							   p_smi230_dev);
 	range_reg_val = data & SMI230_ACCEL_RANGE_MASK;
 	if (range_reg_val != p_smi230_dev->accel_cfg.range) {
-		msleep(1);
-		err = smi230_acc_set_meas_conf(p_smi230_dev);
-		if (err) {
-			PERR("setting range failed");
-			mutex_unlock(&interrupt_handling_lock);
-			return err;
-		}
-		msleep(1);
-		err = smi230_acc_get_regs(SMI230_ACCEL_RANGE_REG, &data, 1,
-					  p_smi230_dev);
-		if (err) {
-			PERR("read back range failed");
-			mutex_unlock(&interrupt_handling_lock);
-			return err;
-		}
-		range_reg_val = data & SMI230_ACCEL_RANGE_MASK;
+		usleep_range(1000, 1001);
+		err |= smi230_acc_set_meas_conf(p_smi230_dev);
 	}
 	mutex_unlock(&interrupt_handling_lock);
 
+	if (err) {
+		PERR("setting range failed");
+		return err;
+	}
 	if (range_reg_val == p_smi230_dev->accel_cfg.range)
-		PDEBUG("successfully set range to %d", range);
+		PDEBUG("set range to %d, err %d", range, err);
 	else {
 		PDEBUG("set range to %d failed. reg_val %d", range,
-		       range_reg_val);
+				range_reg_val);
 		return -1;
 	}
 	return count;
