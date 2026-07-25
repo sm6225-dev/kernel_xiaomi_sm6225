@@ -24,7 +24,7 @@ if [[ "$TARGET" == "spes" ]]; then
     TARGET_DEFCONFIG="gki_defconfig vendor/bengal_GKI.config vendor/spes_GKI.config"
     TARGET_KERNEL_EXT_MODULES="
       qcom/opensource/mmrm-driver
-      qcom/opensource/audio-kernel
+      qcom/opensource/audio-kernel-apr
       qcom/opensource/camera-kernel
       qcom/opensource/dataipa/drivers/platform/msm
       qcom/opensource/datarmnet/core
