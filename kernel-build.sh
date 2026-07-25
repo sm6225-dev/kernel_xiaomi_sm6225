@@ -42,7 +42,8 @@ if [[ "$TARGET" == "spes" ]]; then
       qcom/opensource/touch-drivers
       qcom/opensource/wlan/platform
       qcom/opensource/wlan/qcacld-3.0
-      qcom/opensource/bt-kernel"
+      qcom/opensource/bt-kernel
+      st/opensource/driver"
     TARGET_KERNEL_EXT_MODULE_ROOT=$KERNEL_SRC/../sm6225-modules
     FIRST_STAGE_MODULES_LIST="modules.list.msm.bengal"
     RECOVERY_EXT_MODULES="msm_drm.ko"
