@@ -1722,6 +1722,7 @@ static const struct adsp_data khaje_adsp_resource = {
 	.ssr_name = "lpass",
 	.sysmon_name = "adsp",
 	.ssctl_id = 0x14,
+	.auto_boot = true,
 };
 
 static const struct adsp_data qcs605_adsp_resource = {
