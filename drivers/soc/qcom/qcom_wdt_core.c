@@ -340,16 +340,6 @@ static void qcom_wdt_disable(struct msm_watchdog_data *wdog_dd)
 static int restart_wdog_handler(struct notifier_block *this,
 			       unsigned long event, void *ptr)
 {
-	struct msm_watchdog_data *wdog_dd = container_of(this,
-				struct msm_watchdog_data, restart_blk);
-	if (WDOG_BITE_ON_PANIC && wdog_dd->in_panic) {
-		/*
-		 * Trigger a watchdog bite here and if this fails,
-		 * device will take the usual restart path.
-		 */
-		pr_info("Triggering late bite\n");
-		qcom_wdt_trigger_bite();
-	}
 	return NOTIFY_DONE;
 }
 
