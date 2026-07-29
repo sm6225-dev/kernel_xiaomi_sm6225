@@ -137,7 +137,7 @@ static struct kobj_type reset_ktype = {
 
 static void update_panic_reboot_reason(void)
 {
-	u8 reason = PON_RESTART_REASON_PANIC;
+	u8 reason = PON_RESTART_REASON_RECOVERY;
 
 	pr_info("%s entered\n", __func__);
 	if (reason && nvmem_cell)
@@ -152,12 +152,16 @@ static void update_panic_reboot_reason(void)
 #endif
 }
 
+static void set_dload_mode(int on);
+
 static int panic_prep_restart(struct notifier_block *this,
 			      unsigned long event, void *ptr)
 {
 	update_panic_reboot_reason();
 	in_panic = 1;
-	__raw_writel(0x77665505, restart_reason);
+	__raw_writel(0x77665502, restart_reason);
+	mb();
+	set_dload_mode(1);
 	qpnp_pon_store_extra_reset_info(RESET_EXTRA_PANIC_REASON,
 			RESET_EXTRA_PANIC_REASON);
 	pr_info("panic_prep_restart store extra reset info\n");
@@ -495,7 +499,9 @@ static void msm_restart_prepare(const char *cmd)
 			__raw_writel(0x77665501, restart_reason);
 		}
 	} else if (in_panic == 1) {
-		__raw_writel(0x77665505, restart_reason);
+		reason = PON_RESTART_REASON_RECOVERY;
+		__raw_writel(0x77665502, restart_reason);
+		mb();
 		qpnp_pon_store_extra_reset_info(RESET_EXTRA_PANIC_REASON,
 			RESET_EXTRA_PANIC_REASON);
 	} else {
@@ -538,6 +544,11 @@ static int do_msm_restart(struct notifier_block *unused, unsigned long action,
 	pr_notice("Going down for restart now\n");
 
 	msm_restart_prepare(cmd);
+
+#ifdef CONFIG_QCOM_FORCE_WDOG_BITE_ON_PANIC
+	if (WDOG_BITE_ON_PANIC && in_panic)
+		qcom_wdt_trigger_bite();
+#endif
 
 	deassert_ps_hold();
 
