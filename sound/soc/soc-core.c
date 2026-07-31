@@ -875,9 +875,9 @@ static int soc_dai_link_sanity_check(struct snd_soc_card *card,
 		 * component list.
 		 */
 		if (!soc_find_component(codec)) {
-			dev_dbg(card->dev,
-				"ASoC: codec component %s not found for link %s\n",
-				codec->name, link->name);
+			dev_err(card->dev,
+				"ASoC: missing codec component name=%s node=%pOF dai=%s link=%s\n",
+				codec->name, codec->of_node, codec->dai_name, link->name);
 			return -EPROBE_DEFER;
 		}
 	}
@@ -900,9 +900,9 @@ static int soc_dai_link_sanity_check(struct snd_soc_card *card,
 		 * component list.
 		 */
 		if (!soc_find_component(platform)) {
-			dev_dbg(card->dev,
-				"ASoC: platform component %s not found for link %s\n",
-				platform->name, link->name);
+			dev_err(card->dev,
+				"ASoC: missing platform component name=%s node=%pOF link=%s\n",
+				platform->name, platform->of_node, link->name);
 			return -EPROBE_DEFER;
 		}
 	}
@@ -926,9 +926,9 @@ static int soc_dai_link_sanity_check(struct snd_soc_card *card,
 		 */
 		if ((cpu->of_node || cpu->name) &&
 		    !soc_find_component(cpu)) {
-			dev_dbg(card->dev,
-				"ASoC: cpu component %s not found for link %s\n",
-				cpu->name, link->name);
+			dev_err(card->dev,
+				"ASoC: missing cpu component name=%s node=%pOF dai=%s link=%s\n",
+				cpu->name, cpu->of_node, cpu->dai_name, link->name);
 			return -EPROBE_DEFER;
 		}
 
@@ -1019,8 +1019,10 @@ int snd_soc_add_pcm_runtime(struct snd_soc_card *card,
 	for_each_link_cpus(dai_link, i, cpu) {
 		asoc_rtd_to_cpu(rtd, i) = snd_soc_find_dai(cpu);
 		if (!asoc_rtd_to_cpu(rtd, i)) {
-			dev_info(card->dev, "ASoC: CPU DAI %s not registered\n",
-				 cpu->dai_name);
+			dev_err(card->dev,
+				"ASoC: missing CPU DAI name=%s component=%s node=%pOF link=%s\n",
+				cpu->dai_name, cpu->name, cpu->of_node,
+				dai_link->name);
 			goto _err_defer;
 		}
 		snd_soc_rtd_add_component(rtd, asoc_rtd_to_cpu(rtd, i)->component);
@@ -1030,8 +1032,10 @@ int snd_soc_add_pcm_runtime(struct snd_soc_card *card,
 	for_each_link_codecs(dai_link, i, codec) {
 		asoc_rtd_to_codec(rtd, i) = snd_soc_find_dai(codec);
 		if (!asoc_rtd_to_codec(rtd, i)) {
-			dev_info(card->dev, "ASoC: CODEC DAI %s not registered\n",
-				 codec->dai_name);
+			dev_err(card->dev,
+				"ASoC: missing CODEC DAI name=%s component=%s node=%pOF link=%s\n",
+				codec->dai_name, codec->name, codec->of_node,
+				dai_link->name);
 			goto _err_defer;
 		}
 
@@ -1576,8 +1580,12 @@ static int soc_bind_aux_dev(struct snd_soc_card *card)
 	for_each_card_pre_auxs(card, i, aux) {
 		/* codecs, usually analog devices */
 		component = soc_find_component(&aux->dlc);
-		if (!component)
+		if (!component) {
+			dev_err(card->dev,
+				"ASoC: missing auxiliary component index=%d name=%s node=%pOF\n",
+				i, aux->dlc.name, aux->dlc.of_node);
 			return -EPROBE_DEFER;
+		}
 
 		/* for snd_soc_component_init() */
 		snd_soc_component_set_aux(component, aux);
@@ -2075,8 +2083,18 @@ static int snd_soc_bind_card(struct snd_soc_card *card)
 
 	ret = snd_soc_dapm_add_routes(&card->dapm, card->of_dapm_routes,
 				      card->num_of_dapm_routes);
-	if (ret < 0)
-		goto probe_end;
+	if (ret < 0) {
+		if (card->disable_route_checks) {
+			dev_info(card->dev,
+				 "%s: disable_route_checks set, ignoring errors on OF add_routes\n",
+				 __func__);
+		} else {
+			dev_err(card->dev,
+				 "%s: snd_soc_dapm_add_routes for OF routes failed: %d\n",
+				 __func__, ret);
+			goto probe_end;
+		}
+	}
 
 	/* try to set some sane longname if DMI is available */
 	snd_soc_set_dmi_name(card, NULL);
