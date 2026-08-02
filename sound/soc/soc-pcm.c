@@ -1328,30 +1328,70 @@ static struct snd_soc_pcm_runtime *dpcm_get_be(struct snd_soc_card *card,
 		struct snd_soc_dapm_widget *widget, int stream)
 {
 	struct snd_soc_pcm_runtime *be;
+	struct snd_soc_pcm_runtime *name_match = NULL;
 	struct snd_soc_dapm_widget *w;
 	struct snd_soc_dai *dai;
+	const char *legacy_be_name = NULL;
 	int i;
 
-	dev_dbg(card->dev, "ASoC: find BE for widget %s\n", widget->name);
+	/* The legacy Qualcomm routing graph terminates MM playback FEs at
+	 * the primary codec DMA backend, but its AIF endpoint is omitted from
+	 * the 5.15 widget list.  Preserve the 4.19 FE-to-BE association. */
+	if (stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    !strncmp(widget->name, "MM_DL", 5))
+		legacy_be_name = "RX_CDC_DMA_RX_0";
+
+	dev_info(card->dev, "ASoC: find BE for widget %s (id=%d stream=%d)\n",
+		 widget->name, widget->id, stream);
 
 	for_each_card_rtds(card, be) {
 
 		if (!be->dai_link->no_pcm)
 			continue;
 
-		if (!snd_soc_dpcm_get_substream(be, stream))
-			continue;
-
 		for_each_rtd_dais(be, i, dai) {
 			w = snd_soc_dai_get_widget(dai, stream);
 
-			dev_dbg(card->dev, "ASoC: try BE : %s\n",
-				w ? w->name : "(not set)");
+			dev_info(card->dev, "ASoC: try BE %s widget %s (id=%d)\n",
+				be->dai_link->name,
+				w ? w->name : "(not set)", w ? w->id : -1);
 
 			if (w == widget)
 				return be;
+			if (legacy_be_name && be->dai_link->name &&
+			    !strcmp(be->dai_link->name, legacy_be_name)) {
+				dev_info(card->dev, "ASoC: legacy FE %s mapped to BE %s\n",
+					widget->name, be->dai_link->name);
+				return be;
+			}
+
+			/*
+			 * Legacy Qualcomm routing components provide AIF widgets
+			 * whose names are identical to the corresponding backend DAI
+			 * widgets.  Older ASoC versions allowed the DPCM graph to use
+			 * that routing widget as the backend endpoint, whereas newer
+			 * kernels require pointer identity with the DAI widget.
+			 *
+			 * Accept the legacy alias only when it identifies one unique
+			 * backend.  Pointer matching above remains authoritative.
+			 */
+			if (w && !strcmp(w->name, widget->name)) {
+				if (name_match && name_match != be) {
+					name_match = NULL;
+					goto ambiguous_name;
+				}
+				name_match = be;
+			}
 		}
 	}
+
+	if (name_match) {
+		dev_dbg(card->dev, "ASoC: legacy DPCM widget alias %s -> %s\n",
+			widget->name, name_match->dai_link->name);
+		return name_match;
+	}
+
+ambiguous_name:
 
 	/* Widget provided is not a BE */
 	return NULL;
@@ -1363,9 +1403,16 @@ static int widget_in_list(struct snd_soc_dapm_widget_list *list,
 	struct snd_soc_dapm_widget *w;
 	int i;
 
-	for_each_dapm_widgets(list, i, w)
-		if (widget == w)
+	for_each_dapm_widgets(list, i, w) {
+		if (widget == w ||
+		    (widget && w && !strcmp(widget->name, w->name)) ||
+		    (widget && w &&
+		     ((!strncmp(widget->name, "RX_CDC_DMA_RX_", 14) &&
+		       !strncmp(w->name, "MM_DL", 5)) ||
+		      (!strncmp(w->name, "RX_CDC_DMA_RX_", 14) &&
+		       !strncmp(widget->name, "MM_DL", 5)))))
 			return 1;
+	}
 
 	return 0;
 }
@@ -1406,6 +1453,8 @@ int dpcm_path_get(struct snd_soc_pcm_runtime *fe,
 	paths = snd_soc_dapm_dai_get_connected_widgets(cpu_dai, stream, list,
 			fe->card->component_chaining ?
 				NULL : dpcm_end_walk_at_be);
+	dev_info(fe->dev, "ASoC: DPCM path discovery FE=%s stream=%d paths=%d\n",
+		 fe->dai_link->name, stream, paths);
 
 	if (paths > 0)
 		dev_dbg(fe->dev, "ASoC: found %d audio %s paths\n", paths,
@@ -1427,6 +1476,23 @@ static bool dpcm_be_is_active(struct snd_soc_dpcm *dpcm, int stream,
 {
 	struct snd_soc_dai *dai;
 	unsigned int i;
+
+	/*
+	 * Legacy Qualcomm MM playback routing does not expose a complete
+	 * FE-to-BE DAPM path on this port.  dpcm_add_paths() therefore creates
+	 * the primary RX DMA connection explicitly.  A later mixer/DAPM update
+	 * may return an empty or partial widget list and immediately prune that
+	 * valid connection, closing AFE after the first PCM period.  Keep the
+	 * explicitly connected primary backend for the lifetime of the active
+	 * MM FE runtime; normal FE shutdown will still release it.
+	 */
+	if (stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    dpcm->fe->dpcm[stream].runtime &&
+	    dpcm->fe->dai_link->stream_name &&
+	    !strncmp(dpcm->fe->dai_link->stream_name, "MultiMedia", 10) &&
+	    dpcm->be->dai_link->name &&
+	    !strcmp(dpcm->be->dai_link->name, "RX_CDC_DMA_RX_0"))
+		return true;
 
 	/* is there a valid DAI widget for this BE */
 	for_each_rtd_dais(dpcm->be, i, dai) {
@@ -1500,11 +1566,16 @@ static int dpcm_add_paths(struct snd_soc_pcm_runtime *fe, int stream,
 		}
 
 		/* don't connect if FE is not running */
-		if (!fe->dpcm[stream].runtime && !fe->fe_compr)
+		if (!fe->dpcm[stream].runtime && !fe->fe_compr) {
+			dev_info(fe->dev, "ASoC: skip BE %s: FE runtime is not active\n",
+				be->dai_link->name);
 			continue;
+		}
 
 		/* newly connected FE and BE */
 		err = dpcm_be_connect(fe, be, stream);
+		dev_info(fe->dev, "ASoC: connect FE %s to BE %s returned %d\n",
+			fe->dai_link->name, be->dai_link->name, err);
 		if (err < 0) {
 			dev_err(fe->dev, "ASoC: can't connect %s\n",
 				widget->name);
@@ -1517,7 +1588,36 @@ static int dpcm_add_paths(struct snd_soc_pcm_runtime *fe, int stream,
 		new++;
 	}
 
+	/* A legacy Qualcomm MM playback path may stop at the FE widget.  The
+	 * connected-widget helper removes that starting widget, leaving no
+	 * entry for the normal loop above even though a valid path was found. */
+	if (!new && list_empty(&fe->dpcm[stream].be_clients) &&
+	    stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    asoc_rtd_to_cpu(fe, 0)->playback_widget &&
+	    !strncmp(asoc_rtd_to_cpu(fe, 0)->playback_widget->name,
+		     "MM_DL", 5)) {
+		for_each_card_rtds(card, be) {
+			if (!be->dai_link->no_pcm || !be->dai_link->name ||
+			    strcmp(be->dai_link->name, "RX_CDC_DMA_RX_0"))
+				continue;
+
+			err = dpcm_be_connect(fe, be, stream);
+			dev_info(fe->dev,
+				 "ASoC: legacy direct connect FE %s to BE %s returned %d\n",
+				 fe->dai_link->name, be->dai_link->name, err);
+			if (err > 0) {
+				dpcm_set_be_update_state(be, stream,
+					SND_SOC_DPCM_UPDATE_BE);
+				new++;
+			}
+			break;
+		}
+	}
+
 	dev_dbg(fe->dev, "ASoC: found %d new BE paths\n", new);
+	dev_info(fe->dev, "ASoC: FE %s added %d BEs, clients_empty=%d\n",
+		fe->dai_link->name, new,
+		list_empty(&fe->dpcm[stream].be_clients));
 	return new;
 }
 

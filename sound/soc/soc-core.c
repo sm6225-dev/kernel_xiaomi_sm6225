@@ -2119,18 +2119,24 @@ static int snd_soc_bind_card(struct snd_soc_card *card)
 		}
 	}
 
+	dev_warn(card->dev, "ASoC bringup: entering card late_probe\n");
 	ret = snd_soc_card_late_probe(card);
 	if (ret < 0)
 		goto probe_end;
+	dev_warn(card->dev, "ASoC bringup: card late_probe complete\n");
 
+	dev_warn(card->dev, "ASoC bringup: entering dapm_new_widgets\n");
 	snd_soc_dapm_new_widgets(card);
+	dev_warn(card->dev, "ASoC bringup: dapm_new_widgets complete\n");
 
+	dev_warn(card->dev, "ASoC bringup: entering snd_card_register\n");
 	ret = snd_card_register(card->snd_card);
 	if (ret < 0) {
 		dev_err(card->dev, "ASoC: failed to register soundcard %d\n",
 				ret);
 		goto probe_end;
 	}
+	dev_warn(card->dev, "ASoC bringup: snd_card_register complete\n");
 
 	card->instantiated = 1;
 	dapm_mark_endpoints_dirty(card);

@@ -1203,6 +1203,7 @@ static __always_inline int is_connected_ep(struct snd_soc_dapm_widget *widget,
 				      enum snd_soc_dapm_direction))
 {
 	enum snd_soc_dapm_direction rdir = SND_SOC_DAPM_DIR_REVERSE(dir);
+	struct snd_soc_dapm_widget *listed_widget;
 	struct snd_soc_dapm_path *path;
 	int con = 0;
 
@@ -1212,8 +1213,16 @@ static __always_inline int is_connected_ep(struct snd_soc_dapm_widget *widget,
 	DAPM_UPDATE_STAT(widget, path_checks);
 
 	/* do we need to add this widget to the list ? */
-	if (list)
+	if (list) {
+		list_for_each_entry(listed_widget, list, work_list) {
+			if (listed_widget == widget)
+				goto widget_listed;
+		}
+
 		list_add_tail(&widget->work_list, list);
+	}
+
+widget_listed:
 
 	if (custom_stop_condition && custom_stop_condition(widget, dir)) {
 		list = NULL;
