@@ -405,6 +405,16 @@ static inline bool pd_process_timer_msg(
 			PE_SNK_READY, PE_SNK_SELECT_CAPABILITY);
 
 	case PD_TIMER_SINK_WAIT_CAP:
+	{
+		extern int disable_pd_hard_reset;
+		PD_ERR("Checking Bypass flag: %d\n", disable_pd_hard_reset);
+		if (disable_pd_hard_reset) {
+			PD_ERR("Bypassing Hard Reset (recovery mode)\n");
+			PE_TRANSIT_STATE(pd_port, PE_SNK_READY);
+			return true;
+		}
+	}
+	/* fall through if not disabled */
 	case PD_TIMER_PS_TRANSITION:
 #ifdef CONFIG_USB_PD_RETRY_HRESET
 		/* fall through */
