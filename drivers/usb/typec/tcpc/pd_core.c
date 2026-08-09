@@ -24,6 +24,17 @@
 #if IS_ENABLED(CONFIG_DUAL_ROLE_USB_INTF)
 #include <linux/usb/class-dual-role.h>
 #endif /* CONFIG_DUAL_ROLE_USB_INTF */
+#include <linux/module.h>
+
+/* Default to 1: bypass PD Hard Reset when source caps aren't received in time.
+ * This is safe because on normal boots a real charger/PC responds within ~50ms,
+ * so the 620ms SINK_WAIT_CAP timer never fires and this flag has no effect.
+ * On recovery boots (Type-C to Type-C), the PC responds slowly causing the
+ * timer to fire; skipping the hard reset keeps the USB connection stable.
+ */
+int disable_pd_hard_reset = 1;
+module_param(disable_pd_hard_reset, int, 0644);
+MODULE_PARM_DESC(disable_pd_hard_reset, "Disable PD Hard Reset on Wait Cap timeout");
 
 /* From DTS */
 
