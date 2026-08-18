@@ -36,7 +36,7 @@ if [[ "$TARGET" == "spes" ]]; then
       qcom/opensource/datarmnet-ext/sch
       qcom/opensource/datarmnet-ext/wlan
       qcom/opensource/display-drivers/msm
-      qcom/opensource/video-driver
+      qcom/opensource/video-driver-legacy
       qcom/opensource/securemsm-kernel
       qcom/opensource/graphics-kernel
       qcom/opensource/touch-drivers
