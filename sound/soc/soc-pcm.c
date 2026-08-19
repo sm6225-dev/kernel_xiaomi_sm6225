@@ -1334,12 +1334,15 @@ static struct snd_soc_pcm_runtime *dpcm_get_be(struct snd_soc_card *card,
 	const char *legacy_be_name = NULL;
 	int i;
 
-	/* The legacy Qualcomm routing graph terminates MM playback FEs at
-	 * the primary codec DMA backend, but its AIF endpoint is omitted from
+	/* The legacy Qualcomm routing graph terminates MM playback/capture FEs at
+	 * the primary codec DMA backends, but their AIF endpoints are omitted from
 	 * the 5.15 widget list.  Preserve the 4.19 FE-to-BE association. */
 	if (stream == SNDRV_PCM_STREAM_PLAYBACK &&
 	    !strncmp(widget->name, "MM_DL", 5))
 		legacy_be_name = "RX_CDC_DMA_RX_0";
+	else if (stream == SNDRV_PCM_STREAM_CAPTURE &&
+		 !strncmp(widget->name, "MM_UL", 5))
+		legacy_be_name = "TX_CDC_DMA_TX_3";
 
 	dev_info(card->dev, "ASoC: find BE for widget %s (id=%d stream=%d)\n",
 		 widget->name, widget->id, stream);
@@ -1410,7 +1413,15 @@ static int widget_in_list(struct snd_soc_dapm_widget_list *list,
 		     ((!strncmp(widget->name, "RX_CDC_DMA_RX_", 14) &&
 		       !strncmp(w->name, "MM_DL", 5)) ||
 		      (!strncmp(w->name, "RX_CDC_DMA_RX_", 14) &&
-		       !strncmp(widget->name, "MM_DL", 5)))))
+		       !strncmp(widget->name, "MM_DL", 5)) ||
+		      (!strncmp(widget->name, "TX_CDC_DMA_TX_", 14) &&
+		       !strncmp(w->name, "MM_UL", 5)) ||
+		      (!strncmp(w->name, "TX_CDC_DMA_TX_", 14) &&
+		       !strncmp(widget->name, "MM_UL", 5)) ||
+		      (!strncmp(widget->name, "VA_CDC_DMA_TX_", 14) &&
+		       !strncmp(w->name, "MM_UL", 5)) ||
+		      (!strncmp(w->name, "VA_CDC_DMA_TX_", 14) &&
+		       !strncmp(widget->name, "MM_UL", 5)))))
 			return 1;
 	}
 
@@ -1588,29 +1599,40 @@ static int dpcm_add_paths(struct snd_soc_pcm_runtime *fe, int stream,
 		new++;
 	}
 
-	/* A legacy Qualcomm MM playback path may stop at the FE widget.  The
+	/* A legacy Qualcomm MM playback/capture path may stop at the FE widget.  The
 	 * connected-widget helper removes that starting widget, leaving no
 	 * entry for the normal loop above even though a valid path was found. */
-	if (!new && list_empty(&fe->dpcm[stream].be_clients) &&
-	    stream == SNDRV_PCM_STREAM_PLAYBACK &&
-	    asoc_rtd_to_cpu(fe, 0)->playback_widget &&
-	    !strncmp(asoc_rtd_to_cpu(fe, 0)->playback_widget->name,
-		     "MM_DL", 5)) {
-		for_each_card_rtds(card, be) {
-			if (!be->dai_link->no_pcm || !be->dai_link->name ||
-			    strcmp(be->dai_link->name, "RX_CDC_DMA_RX_0"))
-				continue;
+	if (!new && list_empty(&fe->dpcm[stream].be_clients)) {
+		const char *default_be = NULL;
 
-			err = dpcm_be_connect(fe, be, stream);
-			dev_info(fe->dev,
-				 "ASoC: legacy direct connect FE %s to BE %s returned %d\n",
-				 fe->dai_link->name, be->dai_link->name, err);
-			if (err > 0) {
-				dpcm_set_be_update_state(be, stream,
-					SND_SOC_DPCM_UPDATE_BE);
-				new++;
+		if (stream == SNDRV_PCM_STREAM_PLAYBACK &&
+		    asoc_rtd_to_cpu(fe, 0)->playback_widget &&
+		    !strncmp(asoc_rtd_to_cpu(fe, 0)->playback_widget->name,
+			     "MM_DL", 5))
+			default_be = "RX_CDC_DMA_RX_0";
+		else if (stream == SNDRV_PCM_STREAM_CAPTURE &&
+			 asoc_rtd_to_cpu(fe, 0)->capture_widget &&
+			 !strncmp(asoc_rtd_to_cpu(fe, 0)->capture_widget->name,
+				  "MM_UL", 5))
+			default_be = "TX_CDC_DMA_TX_3";
+
+		if (default_be) {
+			for_each_card_rtds(card, be) {
+				if (!be->dai_link->no_pcm || !be->dai_link->name ||
+				    strcmp(be->dai_link->name, default_be))
+					continue;
+
+				err = dpcm_be_connect(fe, be, stream);
+				dev_info(fe->dev,
+					 "ASoC: legacy direct connect FE %s to BE %s returned %d\n",
+					 fe->dai_link->name, be->dai_link->name, err);
+				if (err > 0) {
+					dpcm_set_be_update_state(be, stream,
+						SND_SOC_DPCM_UPDATE_BE);
+					new++;
+				}
+				break;
 			}
-			break;
 		}
 	}
 
